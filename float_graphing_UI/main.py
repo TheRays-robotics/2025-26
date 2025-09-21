@@ -1,20 +1,61 @@
 import asyncio
 from pyray import *
-from colorutils import hex_to_rgb
-# size:1366,688
 def scale(value, istart, istop, ostart, ostop):
-	return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
-async def main():   # You MUST have an async main function
-    init_window(get_screen_width(), get_screen_height(), "Hello")
-    while not window_should_close():
+    return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
+
+width,height=get_screen_width(), get_screen_height()
+
+async def second():
+    """Logic for the second window."""
+    init_window(width, height, "hi")
+    should_exit = False
+    
+    while not window_should_close() and not should_exit:
         begin_drawing()
         clear_background(BLACK)
-        draw_text("Hello world", 190, get_mouse_y(), int((get_mouse_x()/10)),LIME)
-        if abs(10-get_mouse_y()) > 200:
-            draw_text("Hello world", 190, get_mouse_y(), int((get_mouse_x()/10)),VIOLET)
+        draw_text("Hello world", 190, get_mouse_y(), int((get_mouse_x()/10)), BLUE)
         end_drawing()
-        await asyncio.sleep(0) # You MUST call this in your main loop
-    close_window()
+        
+        if is_key_pressed(KeyboardKey.KEY_ESCAPE):
+            should_exit = True
+        
+        await asyncio.sleep(0)
     
+
+    close_window()
+
+async def main():
+    """Main loop for handling window switching."""
+    current_state = "main_window"
+    
+    while current_state != "quit":
+        if current_state == "main_window":
+        
+            init_window(width, height, "Hello")
+            while not window_should_close():
+                begin_drawing()
+                clear_background(BLACK)
+                draw_text("Hello world", 190, get_mouse_y(), int((get_mouse_x()/10)), LIME)
+                
+            
+                if is_key_pressed(KeyboardKey.KEY_SPACE):
+                    break
+                
+                end_drawing()
+                await asyncio.sleep(0)
+            
+        
+            if window_should_close():
+                current_state = "quit"
+            else:
+                close_window()
+                current_state = "second_window"
+                
+        elif current_state == "second_window":
+            await second()
+            current_state = "main_window"
+    
+
+    close_window()
 
 asyncio.run(main())
