@@ -5,8 +5,7 @@ def scale(value, istart, istop, ostart, ostop):
 
 width,height=get_screen_width(), get_screen_height()
 
-async def second():
-    """Logic for the second window."""
+async def graph(data):
     init_window(width, height, "hi")
     should_exit = False
     
@@ -31,7 +30,7 @@ async def main():
     while current_state != "quit":
         if current_state == "main_window":
         
-            init_window(width, height, "Hello")
+            init_window(width, height, "MAIN")
             while not window_should_close():
                 begin_drawing()
                 clear_background(BLACK)
@@ -49,10 +48,10 @@ async def main():
                 current_state = "quit"
             else:
                 close_window()
-                current_state = "second_window"
+                current_state = "graph_window"
                 
-        elif current_state == "second_window":
-            await second()
+        elif current_state == "graph_window":
+            await graph([(0,0),(5,10),(10,5),(15,15)])
             current_state = "main_window"
     
 
