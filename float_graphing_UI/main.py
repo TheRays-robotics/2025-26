@@ -3,6 +3,7 @@ from pyray import *
 import os
 from math import dist
 X,Y=0,1
+
 def scale(value, istart, istop, ostart, ostop):
     return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
 R_GREEN = Color(89, 208, 55,255)
