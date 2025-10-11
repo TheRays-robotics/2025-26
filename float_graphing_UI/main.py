@@ -43,17 +43,29 @@ async def graph(data):
         begin_drawing()
         clear_background(Color(20,50,20))
         draw_rectangle(33,0,width-33,height-33,(BLACK))
+
+        #Y AXIS LABELS
         verticalmarkerdistance = scale(0.5,lowests[Y],highests[Y],0,height-33)
         for i in range(int(highests[Y]/0.5)):
-            draw_line(0,int(verticalmarkerdistance*i),1366,int(verticalmarkerdistance*i),WHITE)
-            draw_text_ex(font,str(i/2),Vector2(0,int(verticalmarkerdistance)*i),15,2,R_GREEN)
+            draw_line(0,int(verticalmarkerdistance*i),width,int(verticalmarkerdistance*i),WHITE)
+            draw_text_ex(font,str(i*0.5),Vector2(0,int(verticalmarkerdistance)*i),15,2,R_GREEN)
         draw_text_ex(font,str(highests[Y]),Vector2(0,height-33),15,2,R_GREEN)
-        draw_line(0,height-33,1366,height-33,WHITE)
+        draw_line(0,height-33,width,height-33,WHITE)
+
+        #X AXIS LABELS
+        horizontalmarkerdistance = scale(5,lowests[X],highests[X],0,width-33)
+        for i in range(int(highests[X]/5)):
+            draw_line(int(horizontalmarkerdistance*i)+33,0,int(horizontalmarkerdistance*i)+33,height-33,WHITE)
+            draw_text_ex(font,str(i*5),Vector2(int(horizontalmarkerdistance*i)+33,height-33),15,2,R_GREEN)
+        draw_text_ex(font,str(highests[X]),Vector2(width,height-33),15,2,R_GREEN)
+        draw_line(width,height-33,width,0,WHITE)
+
         for point in data:
-            #draw_line(0,scaleInt(point[Y],lowests[Y],highests[Y],0,height-33),1366,scaleInt(point[Y],lowests[Y],highests[Y],0,height-33),WHITE)
+            #draw_line(0,scaleInt(point[Y],lowests[Y],highests[Y],0,height-33),width,scaleInt(point[Y],lowests[Y],highests[Y],0,height-33),WHITE)
             
             draw_circle(int(scale(point[X],lowests[X],highests[X],33,width)),int(scale(point[Y],lowests[Y],highests[Y],0,height-33)),8,BLACK)
             draw_circle(int(scale(point[X],lowests[X],highests[X],33,width)),int(scale(point[Y],lowests[Y],highests[Y],0,height-33)),7,R_GREEN)
+            draw_text(str(point),int(scale(point[X],lowests[X],highests[X],33,width)),int(scale(point[Y],lowests[Y],highests[Y],0,height-33)),10,RED)
             
             #draw_text_ex(font,str(point[Y]),Vector2(0,scale(point[Y],lowests[Y],highests[Y],0,height-33)),15,2,R_GREEN)
         #draw_text_ex(font, "Hey Kitten", Vector2(190, get_mouse_y()), int(get_mouse_x()/10) ,int(get_mouse_x()/50), BLUE)
