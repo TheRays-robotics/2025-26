@@ -2,7 +2,7 @@ import asyncio
 from pyray import *
 import os
 from math import dist
-#run command before file: export DISPLAY=:0
+#run command before main.py: export DISPLAY=:0
 X,Y=0,1
 def scale(value, istart, istop, ostart, ostop):
     return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
