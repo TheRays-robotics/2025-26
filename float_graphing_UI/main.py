@@ -31,11 +31,10 @@ def circleButton(x,y,radius,image,color):
     return(False)
     
 mainfont = "mononoki-Regular.ttf"
-
-init_window(width, height, "soup")
-
-while not window_should_close():
-        current_profile = 0
+async def main():
+    init_window(width, height, "soup")
+    current_profile = 0
+    while not window_should_close():
         font = load_font_ex(("float_graphing_UI/"+mainfont).encode(),30,None,0)
         begin_drawing()
         clear_background(BLACK)
@@ -47,23 +46,25 @@ while not window_should_close():
                 x_values.append(p[X])
                 y_values.append(p[Y])
             plt.plot(x_values, y_values)
-            plt.xlabel("X-axis Label")
-            plt.ylabel("Y-axis Label")
-            plt.title("Simple Line Plot")
+            plt.xlabel("Time (s)")
+            plt.ylabel("Depth (m)")
+            plt.title("Profile : "+str(current_profile+1))
             plt.show()
         draw_line(0,36,width,36,WHITE)
         draw_line(36,36,36,height,WHITE)
         draw_line(660,36,660,height,WHITE)
+        draw_text(str(profiles[current_profile]),500,100,10,R_GREEN)
         for i in range(len(profiles)):
-            draw_rectangle(0,37+(36*i),35,36,(W_PURPLE,W_PURPLE2)[i%2])
-            draw_text_ex(font,str(i+1),Vector2(10,42+(36*i)),25,2,WHITE)
+                    draw_rectangle(0,37+(36*i),35,36,(W_PURPLE,W_PURPLE2)[i%2])
+                    draw_text_ex(font,str(i+1),Vector2(10,42+(36*i)),25,2,WHITE)
         if get_mouse_x() <= 36:
-            for i in range (len(profiles)):
-                if get_mouse_y() > 37+(36*i) and get_mouse_y() < 36+37+(36*i):
-                    draw_rectangle_lines(0,37+(36*i),35,36,WHITE)
-                    if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_LEFT):
-                        draw_rectangle(0,37+(36*i),35,36,WHITE)
-                        current_profile = i
+                    for i in range (len(profiles)):
+                        if get_mouse_y() > 37+(36*i) and get_mouse_y() < 36+37+(36*i):
+                            draw_rectangle_lines(0,37+(36*i),35,36,WHITE)
+                            if is_mouse_button_down(MouseButton.MOUSE_BUTTON_LEFT):
+                                draw_rectangle(0,37+(36*i),35,36,WHITE)
+                                print(i)
+                                current_profile = i
         
         draw_line(36,72,658,72,WHITE)
         draw_line(348,72,348,height,WHITE)
@@ -76,4 +77,6 @@ while not window_should_close():
 
         end_drawing()
 
-close_window()
+    close_window()
+
+asyncio.run(main())
