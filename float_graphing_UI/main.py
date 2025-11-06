@@ -7,7 +7,6 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from time import sleep
-
 #run command before main.py: export DISPLAY=:0
 def processColor(c,o):
     color = colorutils.hex_to_rgb("#"+c)
