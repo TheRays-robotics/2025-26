@@ -132,13 +132,13 @@ void loop() {
     }
 
     if (print) {
-      Serial.print("[");
+      Serial.print("*W");
       Serial.print(avgWeight, 2);  //Print 2 decimal places
-      Serial.print("]");
-      Serial.print("(");
+      Serial.print("W");
+      Serial.print("T");
       // Corrected starttime spelling in the print statement
       Serial.print((float)(millis() - starttime) / 1000, 1);  //Print 1 decimal place (seconds since 's' was pressed)
-      Serial.print(")");
+      Serial.print("T");
       Serial.println();
     }
 

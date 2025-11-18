@@ -1,13 +1,17 @@
+#WINDOWS ONLY
 import asyncio
 from pyray import *
-import os
+import re
 from math import dist
 import colorutils
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from time import sleep
-#run command before main.py: export DISPLAY=:0
+import serial
+global line
+
+ser = serial.Serial('COM3', 115200,timeout=100)
 def processColor(c,o):
     color = colorutils.hex_to_rgb("#"+c)
     return(Color(color[0],color[1],color[2],o))
@@ -22,7 +26,7 @@ W_PURPLE2 = processColor("7F2C92",255)
 
 width,height=1366, 768-45-30
 
-profiles=[[(0,0),(5,1),(10,2),(15,3)],[(0,3),(5,2),(10,1),(15,0)]]
+profiles=[[]]
 def circleButton(x,y,radius,image,color):
     draw_circle(x,y,radius,color)
     if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_LEFT):
@@ -34,6 +38,7 @@ mainfont = "mononoki-Regular.ttf"
 async def main():
     init_window(width, height, "soup")
     current_profile = 0
+    line = ""
     while not window_should_close():
         font = load_font_ex(("float_graphing_UI/"+mainfont).encode(),30,None,0)
         begin_drawing()
@@ -47,7 +52,7 @@ async def main():
                 y_values.append(p[Y])
             plt.plot(x_values, y_values)
             plt.xlabel("Time (s)")
-            plt.ylabel("Depth (m)")
+            plt.ylabel("Thrust (N)")
             plt.title("Profile : "+str(current_profile+1))
             plt.show()
         draw_line(0,36,width,36,WHITE)
@@ -74,6 +79,21 @@ async def main():
             draw_text_ex(font,str(point[X])+"(m)",Vector2(40,I*30+72),20,2,WHITE)
             draw_line(36,I*30+94,658,I*30+94,WHITE)
         draw_fps(300,0)
+        if ser.in_waiting > 0:
+            line = str(ser.readline().decode(encoding="utf-8")).replace('\n',"")
+            if "*" in line:
+                profiles[-1].append([float(re.findall(r"T.*T",line)[-1].replace("T","0")),float(re.findall(r"W.*W",line)[-1].replace("W","0"))])
+            if "stop" in line:
+                 profiles.append([])
+        draw_text_ex(font,line,Vector2(700,0),20,2,WHITE)
+        if circleButton(500,500,20,NotImplemented,W_PURPLE):
+             ser.write(input().encode())
+        if circleButton(600,500,20,NotImplemented,R_GREEN):
+             ser.write("p".encode())
+        if circleButton(700,500,20,NotImplemented,W_PURPLE2):
+             ser.write("s".encode())
+        
+
 
         end_drawing()
 
