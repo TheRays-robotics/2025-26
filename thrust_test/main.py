@@ -11,7 +11,7 @@ from time import sleep
 import serial
 global line
 
-ser = serial.Serial('COM3', 115200,timeout=100)
+ser = serial.Serial('COM4', 115200,timeout=100)
 def processColor(c,o):
     color = colorutils.hex_to_rgb("#"+c)
     return(Color(color[0],color[1],color[2],o))
