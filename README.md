@@ -1,5 +1,8 @@
 All of the code written by Warrenton Aquatic Robotics: The Rays, for the MATE ROV 2026 competition.
-| Syntax      | Description |
-| ----------- | ----------- |
-| Header      | Title       |
-| Paragraph   | Text        |
+```
+{
+  "firstName": "John",
+  "lastName": "Smith",
+  "age": 25
+}
+```
