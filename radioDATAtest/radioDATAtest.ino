@@ -10,7 +10,10 @@ void setup() {
   Serial.begin(115200);
   // Initialize the second serial port for communication with another device
   RYLR.begin(115200);
-
+  if (!SD.begin(BUILTIN_SDCARD)) {
+    Serial.println("SD Card Initialization Failed!");
+    return;
+  }
   // Wait a moment for the USB connection to establish
 
   while (!RYLR) {
@@ -34,11 +37,14 @@ void loop() {
     if (c == 10) {
       lineindex = 0;
       // Serial.print("line:");
-      // Serial.println(line);
+      Serial.println(line);
       if (line[1] == 82 && line[2] == 67) {
         Serial.print("message:");
         message = line[10];
         Serial.println(message);
+      }
+      for (int i = 0; i < sizeof(line); ++i) {
+        line[i] = 0;
       }
     }
   }
@@ -48,20 +54,39 @@ void loop() {
     RYLR.write(c);
   }
   if (message == 'D') {
+    message = 'o';
     Serial.println("yippee");
     File myFile = SD.open("data.txt");
-    if (myFile) {
-      Serial.println("Reading data.txt:");
-      while (myFile.available()) {
-        char c = myFile.read();
-        line[lineindex] = c;
-        lineindex++;
-        if (c == 10) {
-          line = "";
-        }
+    Serial.println("yippee1");
+    //if (myFile) {
+    Serial.println("Reading data.txt:");
+    while (myFile.available()) {
+      String dataLine = myFile.readStringUntil(10, 1000);
+      if (dataLine[0] == 42) {
+        break;
       }
-      RYLR.print("AT+SEND=82,");
-      RYLR.print();
-      message = 'o';
+      dataLine.trim();
+
+      RYLR.print("AT+SEND=");
+      RYLR.print("82");
+      RYLR.print(",");
+      RYLR.print(dataLine.length());
+      RYLR.print(",");
+      RYLR.print(dataLine);
+      RYLR.print("\r\n");  // Critical: Module requires both \r and \n
+
+      // Print to Serial Monitor for debugging
+      Serial.print("Command Sent: AT+SEND=");
+      Serial.print("82");
+      Serial.print(",");
+      Serial.print(dataLine.length());
+      Serial.print(",");
+      Serial.println(dataLine);
+      delay(3000);
+      for (int i = 0; i < sizeof(dataLine); ++i) {
+        line[i] = 0;
+      }
     }
   }
+  //}
+}
