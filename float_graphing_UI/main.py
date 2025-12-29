@@ -6,7 +6,11 @@ import colorutils
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+import serial
 from time import sleep
+global line
+
+ser = serial.Serial('COM6', 115200,timeout=100)
 #on chrome run command before main.py: export DISPLAY=:0
 def processColor(c,o):
     color = colorutils.hex_to_rgb("#"+c)
@@ -34,6 +38,7 @@ mainfont = "mononoki-Regular.ttf"
 async def main():
     init_window(width, height, "soup")
     current_profile = 0
+    line=""
     while not window_should_close():
         font = load_font_ex(("float_graphing_UI/"+mainfont).encode(),30,None,0)
         begin_drawing()
@@ -68,12 +73,22 @@ async def main():
         
         draw_line(36,72,658,72,WHITE)
         draw_line(348,72,348,height,WHITE)
+        
+        if circleButton(500,200,60,NotImplemented,W_PURPLE2):
+            ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))
+
         for point in profiles[current_profile]:
             I = profiles[current_profile].index(point)
             draw_text_ex(font,str(point[Y])+"(s)",Vector2(350,I*30+72),20,2,WHITE)
             draw_text_ex(font,str(point[X])+"(m)",Vector2(40,I*30+72),20,2,WHITE)
             draw_line(36,I*30+94,658,I*30+94,WHITE)
         draw_fps(300,0)
+        if ser.in_waiting > 0:
+            line = str(ser.readline().decode(encoding="utf-8")).replace('\n',"")
+            if "*" in line:
+                profiles[-1].append([float(re.findall(r"T.*|",line)[-1].replace("T","0")),float(re.findall(r"|.*P",line)[-1].replace("W","0"))])
+            if "stop" in line:
+                 profiles.append([])
 
         end_drawing()
 
