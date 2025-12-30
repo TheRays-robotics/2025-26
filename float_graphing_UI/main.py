@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import serial
+import re
 from time import sleep
 global line
 
@@ -26,7 +27,7 @@ W_PURPLE2 = processColor("7F2C92",255)
 
 width,height=1366, 768-45-30
 
-profiles=[[(0,0),(5,1),(10,2),(15,3)],[(0,3),(5,2),(10,1),(15,0)]]
+profiles=[[]]
 def circleButton(x,y,radius,image,color):
     draw_circle(x,y,radius,color)
     if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_LEFT):
@@ -40,7 +41,7 @@ async def main():
     current_profile = 0
     line=""
     while not window_should_close():
-        font = load_font_ex(("float_graphing_UI/"+mainfont).encode(),30,None,0)
+        font = load_font_ex((mainfont).encode(),30,None,0)
         begin_drawing()
         clear_background(BLACK)
         #draw_text("Hello world", 190, get_mouse_y(), int((get_mouse_x()/10)), LIME)
@@ -85,9 +86,10 @@ async def main():
         draw_fps(300,0)
         if ser.in_waiting > 0:
             line = str(ser.readline().decode(encoding="utf-8")).replace('\n',"")
+            print(line)
+            if "TP" in line:
+                profiles[-1].append([float(re.findall(r"T.*T",line)[-1].strip("T")),float(re.findall(r"P.*P",line)[-1].strip("P"))])
             if "*" in line:
-                profiles[-1].append([float(re.findall(r"T.*|",line)[-1].replace("T","0")),float(re.findall(r"|.*P",line)[-1].replace("W","0"))])
-            if "stop" in line:
                  profiles.append([])
 
         end_drawing()
