@@ -10,7 +10,7 @@ import serial
 import re
 from time import sleep
 global line
-
+global expectedIndex
 ser = serial.Serial('COM6', 115200,timeout=100)
 #on chrome run command before main.py: export DISPLAY=:0
 def processColor(c,o):
@@ -24,7 +24,7 @@ def scaleInt(value, istart, istop, ostart, ostop):
 R_GREEN = processColor("3FCC2C",255)
 W_PURPLE = processColor("4E008E",255)
 W_PURPLE2 = processColor("7F2C92",255)
-
+set_trace_log_level(TraceLogLevel.LOG_ERROR) 
 width,height=1366, 768-45-30
 
 profiles=[[]]
@@ -32,6 +32,7 @@ def circleButton(x,y,radius,image,color):
     draw_circle(x,y,radius,color)
     if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_LEFT):
         if dist((get_mouse_x(),get_mouse_y()),(x,y)) <= radius:
+            draw_circle(x,y,radius,WHITE)
             return(True)
     return(False)
     
@@ -69,14 +70,17 @@ async def main():
                             draw_rectangle_lines(0,37+(36*i),35,36,WHITE)
                             if is_mouse_button_down(MouseButton.MOUSE_BUTTON_LEFT):
                                 draw_rectangle(0,37+(36*i),35,36,WHITE)
-                                print(i)
                                 current_profile = i
         
         draw_line(36,72,658,72,WHITE)
         draw_line(348,72,348,height,WHITE)
         
         if circleButton(500,200,60,NotImplemented,W_PURPLE2):
+            print("D")
             ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))
+            ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
+
+            print("D")
 
         for point in profiles[current_profile]:
             I = profiles[current_profile].index(point)
@@ -87,10 +91,15 @@ async def main():
         if ser.in_waiting > 0:
             line = str(ser.readline().decode(encoding="utf-8")).replace('\n',"")
             print(line)
+            if "N" in line:
+                 if int(re.findall(r"N.*N",line)[-1].strip("N")) == len(profiles[-1]):
+                      ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
             if "TP" in line:
                 profiles[-1].append([float(re.findall(r"T.*T",line)[-1].strip("T")),float(re.findall(r"P.*P",line)[-1].strip("P"))])
-            if "*" in line:
-                 profiles.append([])
+            if "stop" in line:
+                profiles.append([])
+                ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
+
 
         end_drawing()
 

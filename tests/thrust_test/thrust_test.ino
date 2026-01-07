@@ -123,9 +123,11 @@ void loop() {
       }
 
       // Handle 't' and 'c' inputs here too, even if print is false
-      if (incoming == 't')  //Tare the scale
+      if (incoming == 't') {  //Tare the scale
+        Serial.println("shrimp");
         myScale.calculateZeroOffset();
-      else if (incoming == 'c')  //Calibrate
+        Serial.println("goob");
+      } else if (incoming == 'c')  //Calibrate
       {
         calibrateScale();
       }
@@ -146,7 +148,7 @@ void loop() {
       Serial.print("\tScale not calibrated. Press 'c'.");
     }
 
-    
+
 
 
     // Removed redundant Serial.available() check and t/c handling
