@@ -10,8 +10,9 @@ import matplotlib.pyplot as plt
 from time import sleep
 import serial
 global line
-
-ser = serial.Serial('COM4', 115200,timeout=100)
+global slider 
+ser = serial.Serial('COM3', 115200,timeout=100)
+#MOROT = serial.Serial('PORT', 115200,timeout=100)
 def processColor(c,o):
     color = colorutils.hex_to_rgb("#"+c)
     return(Color(color[0],color[1],color[2],o))
@@ -33,9 +34,16 @@ def circleButton(x,y,radius,image,color):
         if dist((get_mouse_x(),get_mouse_y()),(x,y)) <= radius:
             return(True)
     return(False)
+def CONTcircleButton(x,y,radius,image,color):
+    draw_circle(x,y,radius,color)
+    if is_mouse_button_down(MouseButton.MOUSE_BUTTON_LEFT):
+        if dist((get_mouse_x(),get_mouse_y()),(x,y)) <= radius:
+            return(True)
+    return(False)
     
 mainfont = "mononoki-Regular.ttf"
 async def main():
+    slider = 300
     init_window(width, height, "soup")
     current_profile = 0
     line = ""
@@ -85,6 +93,11 @@ async def main():
                 profiles[-1].append([float(re.findall(r"T.*T",line)[-1].replace("T","0")),float(re.findall(r"W.*W",line)[-1].replace("W","0"))])
             if "stop" in line:
                  profiles.append([])
+        #MOROT.write(str(slider).encode((((slider-100)/400)*1000)+100))
+        
+        if CONTcircleButton(1000,slider,40,NotImplemented,BLUE):
+            slider = max(100,min(500,get_mouse_y()))
+        draw_text_ex(font,str((((slider-100)/400)*1000)+100),Vector2(1100,slider),20,2,WHITE)
         draw_text_ex(font,line,Vector2(700,0),20,2,WHITE)
         if circleButton(500,500,20,NotImplemented,W_PURPLE):
              ser.write(input().encode())
