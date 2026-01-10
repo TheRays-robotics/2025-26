@@ -1,18 +1,27 @@
 from pyray import *
-
-# Initialization
-init_window(400, 800, "Raylib Buoyancy Simulation")
+import serial
+import re
+init_window(400, 800, "goob")
 set_target_fps(60)
+doserial = False
+if doserial:    
+    ser = serial.Serial('COM5', 9600,timeout=10)
 
 L = 100
 G = 500.0
 S = 700.0  # Must be > G for floating
-W = 400
-Y=0
+W = 0
+Y = 0
 V = 0.0
 set_trace_log_level(TraceLogLevel.LOG_ERROR) 
 
 while not window_should_close():
+    if doserial:
+        ser.write((str(int((((Y-100)/680)*4)*100)/100)+"\n").encode())
+        if ser.in_waiting > 0:
+            LINE=ser.readline().decode(encoding="utf-8")
+            print(LINE)
+            W=((float(LINE)/180)*800)
     dt = get_frame_time()
     V += G * dt
     if Y + 20 > L:
@@ -24,7 +33,7 @@ while not window_should_close():
     if Y > 780:
         Y = 780
         V = 0
-    print(int((((Y-100)/680)*4)*100)/100)
+    #print(int((((Y-100)/680)*4)*100)/100)
     
     begin_drawing()
     clear_background(RAYWHITE)
