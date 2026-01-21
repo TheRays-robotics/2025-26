@@ -13,7 +13,7 @@ image = load_image(relative_path)
 texture = load_texture_from_image(image)    
 doserial = True
 if doserial:    
-    ser = serial.Serial('COM10', 9600, timeout=10)
+    ser = serial.Serial('COM5', 9600, timeout=10)
 
 def getScreenY(y):
     return ((y * 170) + L)
@@ -33,9 +33,9 @@ while not window_should_close():
         ser.write((str(Y) + "\n").encode())
         if ser.in_waiting > 0:
             LINE = ser.readline().decode(encoding="utf-8")
-        
+            print(LINE)
             M = 6.8 + ((float(LINE) / 180) * 8) 
-
+    L=get_mouse_y()
     dt = get_frame_time()
     total_force = M * G
 
