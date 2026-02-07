@@ -1,3 +1,4 @@
 *.ini
 crab/out/*
 output.mp4
+crab/APIKEY.TXT
