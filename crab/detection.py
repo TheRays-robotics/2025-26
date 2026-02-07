@@ -1,33 +1,54 @@
+with open("crab/APIKEY.TXT", "r", encoding="utf-8") as file:
+        api = file.read().strip()
+# Initialize the client
 import cv2
-import supervision as sv
-from rfdetr import RFDETRMedium
-from rfdetr.util.coco_classes import COCO_CLASSES
+from inference_sdk import InferenceHTTPClient
 
-model = RFDETRMedium()
+# 1. Initialize the Client
+client = InferenceHTTPClient(
+    api_url="http://localhost:9001",
+    api_key=api
+)
 
-video_capture = cv2.VideoCapture(<WEBCAM_INDEX>)
-if not video_capture.isOpened():
-    raise RuntimeError("Failed to open webcam: <WEBCAM_INDEX>")
+# 2. Start the Webcam
+video = cv2.VideoCapture(1) # '0' is usually the default webcam
+
+print("Press 'q' to quit.")
 
 while True:
-    success, frame_bgr = video_capture.read()
-    if not success:
+    # Capture frame-by-frame
+    ret, frame = video.read()
+    if not ret:
         break
 
-    frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-    detections = model.predict(frame_rgb, threshold=0.5)
+    # 3. Run Inference
+    # We pass the 'frame' (numpy array) directly to the client
+    result = client.infer(frame, model_id="crab-detector/2")
 
-    labels = [
-        COCO_CLASSES[class_id]
-        for class_id in detections.class_id
-    ]
+    # 4. Simple Visualization (Draw boxes)
+    for prediction in result['predictions']:
 
-    annotated_frame = sv.BoxAnnotator().annotate(frame_bgr, detections)
-    annotated_frame = sv.LabelAnnotator().annotate(annotated_frame, detections, labels)
+        x, y, w, h = prediction['x'], prediction['y'], prediction['width'], prediction['height']
+        label = prediction['class']
+        print(prediction)
+        # Convert Roboflow center-xy to top-left corner for OpenCV
+        x1, y1 = int(x - w/2), int(y - h/2)
+        x2, y2 = int(x + w/2), int(y + h/2)
 
-    cv2.imshow("RF-DETR Webcam", annotated_frame)
-    if cv2.waitKey(1) & 0xFF == ord("q"):
+        # Draw the rectangle and label
+        if label == 'good':
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        elif label == 'evil':
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+    # Display the resulting frame
+    cv2.imshow('Roboflow Crab Detection', frame)
+
+    # Break loop on 'q' key press
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-video_capture.release()
+# Cleanup
+video.release()
 cv2.destroyAllWindows()
