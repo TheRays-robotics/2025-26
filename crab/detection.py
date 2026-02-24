@@ -1,14 +1,15 @@
 import cv2
 import threading
 from inference_sdk import InferenceHTTPClient  # type: ignore
+import os
 
 
-with open("crab/APIKEY.TXT", "r", encoding="utf-8") as file:
-    api = file.read().strip()
+with open(str(os.path.relpath(__file__).replace("detection.py","APIKEY.TXT")), "r", encoding="utf-8") as file:
+        api = file.read().strip()
 
 client = InferenceHTTPClient(api_url="http://localhost:9001", api_key=api)
-video = cv2.VideoCapture(0)
 
+video = cv2.VideoCapture(1)
 
 lastpredictions = []
 is_processing = False
@@ -25,7 +26,7 @@ print("Press 'q' to quit.")
 while True:
     ret, frame = video.read()
     if not ret: break
-    frame = cv2.resize(frame, (640, 640))
+    frame = cv2.resize(frame, (320, 320))
 
     
     if not is_processing:
@@ -34,10 +35,10 @@ while True:
         thread = threading.Thread(target=do_inference, args=(frame.copy(),))
         thread.start()
 
-    
+    frame = cv2.resize(frame, (640, 640))
     evilometer = 0
     for pred in lastpredictions:
-        x, y, w, h = pred['x'], pred['y'], pred['width'], pred['height']
+        x, y, w, h = pred['x']*2, pred['y']*2, pred['width']*2, pred['height']*2
         label = pred['class']
         x1, y1 = int(x - w/2), int(y - h/2)
         x2, y2 = int(x + w/2), int(y + h/2)
