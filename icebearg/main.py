@@ -1,89 +1,109 @@
 import asyncio
 from pyray import *
-import os
-from math import dist,cos,sin
-from math import radians as rad
-import colorutils
+from math import cos, sin, radians as rad
 from haversine import haversine
-import re
-from time import sleep
 
-def processColor(c,o):
-    color = colorutils.hex_to_rgb("#"+c)
-    return(Color(color[0],color[1],color[2],o))
-X,Y=0,1
 def scale(value, istart, istop, ostart, ostop):
     return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
-def scaleInt(value, istart, istop, ostart, ostop):
-    return int(ostart + (ostop - ostart) * ((value - istart) / (istop - istart)))
-def getGPos(x,y):
-    return(scale(x,0,w,45,49),scale(y,0,h,-47,-49))
-def getSpos(x,y):
-    return(int(scale(x,45,49,0,w)),int(scale(y,-47,-49,0,h)))
 
-set_trace_log_level(TraceLogLevel.LOG_ERROR) 
+def getSpos(lat, lon, w, h):
+    sx = scale(lon, -49.5, -47.5, 0, w)
+    sy = scale(lat, 45.5, 47.5, h, 0)+400
+    return int(sx), int(sy)
 
 class platform:
-    def __init__(self, lat, long, depth,name):
-        self.x = lat
-        self.y = long
+    def __init__(self, lat, long, depth, name):
+        self.lat = lat
+        self.lon = long
         self.depth = depth
         self.name = name
+
 class ice:
-    def __init__(self, lat, long,depth,head):
-        self.x = lat
-        self.y = long
+    def __init__(self, lat, long, depth, head):
+        self.lat = lat
+        self.lon = long
         self.depth = depth
         self.head = head
-Hibernia = platform(46.7504,-48.7819,-78,"Hibernia")
-SeaRose = platform(46.7895,-48.1417,-107,"SeaRose")
-TerraNova = platform(46.4,-48.4,-91,"TerraNova")
-Hebron = platform(46.544,-48.498,-93,"Hebron")
 
-platforms = [Hibernia,SeaRose,TerraNova,Hebron]
+Hibernia = platform(46.7504, -48.7819, -78, "Hibernia")
+SeaRose = platform(46.7895, -48.1417, -107, "SeaRose")
+TerraNova = platform(46.4, -48.4, -91, "TerraNova")
+Hebron = platform(46.544, -48.498, -93, "Hebron")
 
-evil = ice(46,-48,-10,300)
+platforms = [Hibernia, SeaRose, TerraNova, Hebron]
+evil = ice(46.2, -48.2, -80, 310)
 
 async def main():
     init_window(100, 100, "soup")
-    global h
-    global w
-    h,w = get_monitor_width(get_current_monitor())-900,get_monitor_height(get_current_monitor())-300
-    set_window_size(w,h)
-    set_window_position(int(h/2),50)
-
+    set_trace_log_level(TraceLogLevel.LOG_ERROR)
+    w = get_monitor_width(get_current_monitor()) - 900
+    h = get_monitor_height(get_current_monitor()) - 300
+    set_window_size(w, h)
+    set_window_position(int(w/3),40)
     while not window_should_close():
+        begin_drawing()
         clear_background(WHITE)
+
+        slon_ice, slat_ice = getSpos(evil.lat, evil.lon, w, h)
         
-        #print(evil.x,evil.y)
-        print(getGPos(get_mouse_x(),get_mouse_y()))
+        # FIXED SCALING
+        # Latitude: 2.0 deg = 120 NMI. Longitude at 46N: 2.0 deg = ~83.4 NMI
+        ppn_y = h / 120.0
+        ppn_x = w / 83.4 
+        
+        evildirlat = cos(rad(evil.head)) * 0.0005
+        evildirlon = sin(rad(evil.head)) * 0.0005
+
+        if slat_ice < get_mouse_y():
+            evil.lat -= evildirlat
+            evil.lon -= evildirlon
+        elif slat_ice > get_mouse_y():
+            evil.lat += evildirlat
+            evil.lon += evildirlon
+
         for P in platforms:
-            slat,slong = getSpos(P.x,P.y)
-            draw_circle(slat,slong,50,GOLD)
-            draw_circle(slat,slong,25,RED)
-            draw_circle(slat,slong,10,BLACK)
-            GD = haversine((P.x,P.y),(evil.x,evil.y),unit="nmi")
-            draw_text(str(round(GD,2))+"NMI",slat,slong-70,30,BLUE)
-            #draw_text(str(dist(getSpos(P.x,P.y),getSpos(evil.x,evil.y))),slat-30,slong-120,30,BLUE)
-            if check_collision_point_circle(Vector2(get_mouse_x(),get_mouse_y()),(slat,slong),15):
-                draw_text("("+str(P.x)+","+str(P.y)+")",slat-30,slong-40,30,BLUE)
-            else:
-                draw_text(P.name,slat-30,slong-40,30,BLUE)
-
-            slat,slong = getSpos(evil.x,evil.y)
-            if slong < get_mouse_y():
-                evil.x += cos(rad(evil.head))/1000
-                evil.y += sin(rad(evil.head))/1000
-            if slong > get_mouse_y():
-                evil.x -= cos(rad(evil.head))/1000
-                evil.y -= sin(rad(evil.head))/1000
-            draw_circle(slat,slong,5,RED)
-                
-
+            sx, sy = getSpos(P.lat, P.lon, w, h)
+            GD = haversine((P.lat, P.lon), (evil.lat, evil.lon), unit="nmi")
             
+            # Draw as Ellipses to account for Longitude distortion
+            draw_ellipse_lines(sx, sy, 10 * ppn_x, 10 * ppn_y, GOLD)
+            draw_ellipse_lines(sx, sy, 5 * ppn_x, 5 * ppn_y, RED)
+            draw_circle(sx, sy, 5, BLACK)
+            
+            draw_text(str(round(GD, 2)) + "NMI", sx - 20, sy - 60, 25, BLUE)
+
+            if check_collision_point_circle(Vector2(get_mouse_x(), get_mouse_y()), (sx, sy), 15):
+                draw_text(f"({P.lat}, {P.lon})", sx - 30, sy + 20, 20, BLUE)
+            else:
+                draw_text(P.name, sx - 30, sy + 20, 20, BLUE)
+
+            ind = platforms.index(P)
+
+            draw_rectangle(100, 100 + (100 * ind),1000,int((100*(len(platforms)-2))/2),GREEN)
+            if GD < 10:
+                if GD < 5:
+                    draw_rectangle(100, 100 + (100 * ind),500,100, RED)
+                else:
+                    draw_rectangle(100, 100 + (100 * ind),500,100, YELLOW)
+            if 0.9 < evil.depth/P.depth < 1.1:
+                draw_rectangle(600, 100 + (100 * ind),500,100, RED)
+            if 0.7 < evil.depth/P.depth < 0.9:
+                draw_rectangle(600, 100 + (100 * ind),500,100, YELLOW)
+            draw_text(str(P.name), 130, 130 + (100 * ind), 50, BLACK)
+            draw_text(str(P.name), 630, 130 + (100 * ind), 50, BLACK)
+            draw_line(100, 100 + (100 * ind), 1100, 100 + (100 * ind), BLACK)
+            draw_line(100, 100 + (100 * (ind + 1)), 1100, 100 + (100 * (ind + 1)), BLACK)
+
+        draw_line(100, (100 * len(platforms)) + 100, 100, 100, MAGENTA)
+        draw_line(1100, (100 * len(platforms)) + 100, 1100, 100, MAGENTA)
+        draw_line(600, (100 * len(platforms)) + 100, 600, 100, MAGENTA)
+
+        draw_circle(slon_ice, slat_ice, 8, SKYBLUE)
+        
+        draw_text("Threat to platforms", 130, 50, 30, BLACK)
+        draw_text("Threat to undersea assets", 630, 50, 30, BLACK)
 
         end_drawing()
-
     close_window()
 
 asyncio.run(main())
