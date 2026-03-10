@@ -9,10 +9,14 @@ import matplotlib.pyplot as plt
 import serial
 import re
 from time import sleep
+
 global line
 global expectedIndex
-ser = serial.Serial('COM6', 115200,timeout=100)
-#on chrome run command before main.py: export DISPLAY=:0
+try:
+    ser = serial.Serial('COM7', 115200,timeout=100)
+    DoSerial = True
+except:
+    DoSerial = False
 def processColor(c,o):
     color = colorutils.hex_to_rgb("#"+c)
     return(Color(color[0],color[1],color[2],o))
@@ -25,7 +29,8 @@ R_GREEN = processColor("3FCC2C",255)
 W_PURPLE = processColor("4E008E",255)
 W_PURPLE2 = processColor("7F2C92",255)
 set_trace_log_level(TraceLogLevel.LOG_ERROR) 
-width,height=1366, 768-45-30
+width,height=2000, 1000
+#1506, 768-45-30
 
 profiles=[[]]
 def circleButton(x,y,radius,image,color):
@@ -36,7 +41,7 @@ def circleButton(x,y,radius,image,color):
             return(True)
     return(False)
     
-mainfont = "mononoki-Regular.ttf"
+mainfont = str(os.path.relpath(__file__).replace("main.py","mononoki-Regular.ttf"))
 async def main():
     init_window(width, height, "soup")
     current_profile = 0
@@ -45,7 +50,6 @@ async def main():
         font = load_font_ex((mainfont).encode(),30,None,0)
         begin_drawing()
         clear_background(BLACK)
-        #draw_text("Hello world", 190, get_mouse_y(), int((get_mouse_x()/10)), LIME)
         if circleButton(789,135,25,NotImplemented,R_GREEN):
             x_values = []
             y_values = []
@@ -57,25 +61,24 @@ async def main():
             plt.ylabel("Depth (m)")
             plt.title("Profile : "+str(current_profile+1))
             plt.show()
-        draw_line(0,36,width,36,WHITE)
-        draw_line(36,36,36,height,WHITE)
-        draw_line(660,36,660,height,WHITE)
-        draw_text(str(profiles[current_profile]),500,100,10,R_GREEN)
+        draw_line(0,50,width,50,WHITE)
+        draw_line(50,50,50,height,WHITE)
+        draw_line(924,50,924,height,WHITE)
         for i in range(len(profiles)):
-                    draw_rectangle(0,37+(36*i),35,36,(W_PURPLE,W_PURPLE2)[i%2])
-                    draw_text_ex(font,str(i+1),Vector2(10,42+(36*i)),25,2,WHITE)
-        if get_mouse_x() <= 36:
+                    draw_rectangle(0,51+(50*i),49,50,(W_PURPLE,W_PURPLE2)[i%2])
+                    draw_text_ex(font,str(i+1),Vector2(10,55+(50*i)),40,2,WHITE)
+        if get_mouse_x() <= 50:
                     for i in range (len(profiles)):
-                        if get_mouse_y() > 37+(36*i) and get_mouse_y() < 36+37+(36*i):
-                            draw_rectangle_lines(0,37+(36*i),35,36,WHITE)
+                        if get_mouse_y() > 51+(50*i) and get_mouse_y() < 50+51+(50*i):
+                            draw_rectangle_lines(0,51+(50*i),60,50,WHITE)
                             if is_mouse_button_down(MouseButton.MOUSE_BUTTON_LEFT):
-                                draw_rectangle(0,37+(36*i),35,36,WHITE)
+                                draw_rectangle(0,51+(50*i),35,50,WHITE)
                                 current_profile = i
         
-        draw_line(36,72,658,72,WHITE)
-        draw_line(348,72,348,height,WHITE)
+        draw_line(50,100,921,100,WHITE)
+        draw_line(487,100,487,height,WHITE)
         
-        if circleButton(500,200,60,NotImplemented,W_PURPLE2):
+        if circleButton(500,200,80,NotImplemented,W_PURPLE2):
             print("D")
             ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))
             ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
@@ -84,21 +87,24 @@ async def main():
 
         for point in profiles[current_profile]:
             I = profiles[current_profile].index(point)
-            draw_text_ex(font,str(point[Y])+"(s)",Vector2(350,I*30+72),20,2,WHITE)
-            draw_text_ex(font,str(point[X])+"(m)",Vector2(40,I*30+72),20,2,WHITE)
-            draw_line(36,I*30+94,658,I*30+94,WHITE)
+            draw_text_ex(font,str(point[Y])+"(s)",Vector2(350,I*30+100),20,2,WHITE)
+            draw_text_ex(font,str(point[X])+"(m)",Vector2(40,I*30+100),20,2,WHITE)
+            draw_line(50,I*30+94,921,I*30+94,WHITE)
         draw_fps(300,0)
-        if ser.in_waiting > 0:
-            line = str(ser.readline().decode(encoding="utf-8")).replace('\n',"")
-            print(line)
-            if "N" in line:
-                 if int(re.findall(r"N.*N",line)[-1].strip("N")) == len(profiles[-1]):
-                      ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
-            if "TP" in line:
-                profiles[-1].append([float(re.findall(r"T.*T",line)[-1].strip("T")),float(re.findall(r"P.*P",line)[-1].strip("P"))])
-            if "stop" in line:
-                profiles.append([])
-                ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
+        if DoSerial:
+            if ser.in_waiting > 0:
+                line = str(ser.readline().decode(encoding="utf-8")).replace('\n',"")
+                print(line)
+                if "N" in line:
+                    print(int(re.findall(r"N.*N",line)[-1].strip("N")),len(profiles[-1])+1)
+                    if int(re.findall(r"N.*N",line)[-1].strip("N")) == len(profiles[-1])+1:
+                        ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
+                if "TP" in line:
+                    profiles[-1].append([float(re.findall(r"T.*T",line)[-1].strip("T")),
+                                        float(re.findall(r"P.*P",line)[-1].strip("P"))])
+                if "stop" in line:
+                    profiles.append([])
+                    ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
 
 
         end_drawing()
