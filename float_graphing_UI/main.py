@@ -96,8 +96,8 @@ async def main():
                 line = str(ser.readline().decode(encoding="utf-8")).replace('\n',"")
                 print(line)
                 if "N" in line:
-                    print(int(re.findall(r"N.*N",line)[-1].strip("N")),len(profiles[-1])+1)
-                    if int(re.findall(r"N.*N",line)[-1].strip("N")) == len(profiles[-1])+1:
+                    print(int(re.findall(r"N.*N",line)[-1].strip("N")),len(profiles[-1]))
+                    if int(re.findall(r"N.*N",line)[-1].strip("N")) == len(profiles[-1]):
                         ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
                 if "TP" in line:
                     profiles[-1].append([float(re.findall(r"T.*T",line)[-1].strip("T")),

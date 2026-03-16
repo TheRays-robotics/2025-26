@@ -9,7 +9,7 @@ with open(str(os.path.relpath(__file__).replace("detection.py","APIKEY.TXT")), "
 
 client = InferenceHTTPClient(api_url="http://localhost:9001", api_key=api)
 
-video = cv2.VideoCapture(1)
+video = cv2.VideoCapture(0)
 
 lastpredictions = []
 is_processing = False
