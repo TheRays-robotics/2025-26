@@ -46,8 +46,8 @@ async def main():
     init_window(width, height, "soup")
     current_profile = 0
     line=""
+    font = load_font_ex((mainfont).encode(),30,None,0)
     while not window_should_close():
-        font = load_font_ex((mainfont).encode(),30,None,0)
         begin_drawing()
         clear_background(BLACK)
         if circleButton(789,135,25,NotImplemented,R_GREEN):
@@ -87,8 +87,8 @@ async def main():
 
         for point in profiles[current_profile]:
             I = profiles[current_profile].index(point)
-            draw_text_ex(font,str(point[Y])+"(s)",Vector2(350,I*30+100),20,2,WHITE)
-            draw_text_ex(font,str(point[X])+"(m)",Vector2(40,I*30+100),20,2,WHITE)
+            draw_text_ex(font,str(point[Y])+"(m)",Vector2(486,I*30+100),20,2,WHITE)
+            draw_text_ex(font,str(point[X])+"(s)",Vector2(55,I*30+100),20,2,WHITE)
             draw_line(50,I*30+94,921,I*30+94,WHITE)
         draw_fps(300,0)
         if DoSerial:
@@ -101,7 +101,7 @@ async def main():
                         ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
                 if "TP" in line:
                     profiles[-1].append([float(re.findall(r"T.*T",line)[-1].strip("T")),
-                                        float(re.findall(r"P.*P",line)[-1].strip("P"))])
+                                        float(re.findall(r"P.*P",line)[-1].strip("P"))*-1])
                 if "stop" in line:
                     profiles.append([])
                     ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))

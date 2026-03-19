@@ -61,6 +61,7 @@ void descend() {
     setpoint = 2.5;
     holding = 0;
     while (true) {
+        //Serial.println("decsacewfojing");
         static elapsedMillis timer;
         static elapsedMillis datalogclock;
         
