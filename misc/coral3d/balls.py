@@ -1,16 +1,7 @@
-import cv2 
+import pyxel  
+import math
 import os
 from math import *
-
-img = cv2.imread(str(os.path.relpath(__file__).replace("3d.py","fire.png")), cv2.IMREAD_COLOR)
-cv2.imshow("image", img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-
-
-
-import pyxel  
 import stl_reader
 def sideofline(A,B,P):
 	val = ((B[x] - A[x])*(P[y] - A[y]) - (B[y] - A[y])*(P[x] - A[x]))
@@ -39,16 +30,16 @@ def qsort(inlist):
 
 def rotate(point, angle):
 	px, pz, py = point
-	qx = px * cos(angle) - py * sin(angle)
-	qy = px * sin(angle) + py * cos(angle)
+	qx = px * math.cos(angle) - py * math.sin(angle)
+	qy = px * math.sin(angle) + py * math.cos(angle)
 	return qx, pz, qy
 
 
 
 def rotate_z(point, angle):
 	pz, px, py = point
-	qx = px * cos(angle) - py * sin(angle)
-	qy = px * sin(angle) + py * cos(angle)
+	qx = px * math.cos(angle) - py * math.sin(angle)
+	qy = px * math.sin(angle) + py * math.cos(angle)
 	return pz,qx, qy
 
 x= 0
@@ -62,7 +53,7 @@ def pipe(X, Y, Z, L, A):
 	global modelcount
 	
 	print("pipe"+str(A)+".stl")
-	PIPEvert, PIPEind = stl_reader.read(str(os.path.relpath(__file__).replace("3d.py","pipe"+str(A)+".stl")))
+	PIPEvert, PIPEind = stl_reader.read(str(os.path.relpath(__file__).replace("balls.py","pipe"+str(A)+".stl")))
 	length =+ len(PIPEvert)
 	for P in PIPEvert:
 		P[A] *= L
@@ -80,7 +71,7 @@ def pipe(X, Y, Z, L, A):
 	indices.extend(PIPEind)
 def ball(X, Y, Z):
 	global modelcount
-	PIPEvert, PIPEind = stl_reader.read(str(os.path.relpath(__file__).replace("3d.py","ball.stl")))
+	PIPEvert, PIPEind = stl_reader.read(str(os.path.relpath(__file__).replace("balls.py","ball.stl")))
 	PIPEind = PIPEind.tolist()
 	length =+ len(PIPEvert)
 	for P in PIPEvert:
@@ -104,38 +95,53 @@ L2 = 20
 L3 = 15
 
 L3S = L3+10
-pipe(-15,0,0,45,z)
-pipe(-15,12.5,22.5,25,y)
-pipe(-15,7.5,-22.5,15,y)
-pipe(-15,12.5,22.5+L1,25,y)
-pipe(-15,0,L1/2+22.5,L1,z)
-pipe(-15,25,L1/2+22.5,L1,z)
-pipe(-15,15,-L2/2-22.5,L2,z)
-pipe(-15,0,-L2/2-22.5,L2,z)
-pipe(-15,7.5,-22.5-L2,15,y)
-pipe(-15,25+L3/2,22.5,L3,y)
-pipe(-15,15+L3S/2,-22.5,L3S,y)
-pipe(-15,L3+25,0,45,z)
+# pipe(-15,0,0,45,z)
+# pipe(-15,12.5,22.5,25,y)
+# pipe(-15,7.5,-22.5,15,y)
+# pipe(-15,12.5,22.5+L1,25,y)
+# pipe(-15,0,L1/2+22.5,L1,z)
+# pipe(-15,25,L1/2+22.5,L1,z)
+# pipe(-15,15,-L2/2-22.5,L2,z)
+# pipe(-15,0,-L2/2-22.5,L2,z)
+# pipe(-15,7.5,-22.5-L2,15,y)
+# pipe(-15,25+L3/2,22.5,L3,y)
+# pipe(-15,15+L3S/2,-22.5,L3S,y)
+# pipe(-15,L3+25,0,45,z)
 
-pipe(15,0,0,45,z)
-pipe(15,12.5,22.5,25,y)
-pipe(15,7.5,-22.5,15,y)
-pipe(15,12.5,22.5+L1,25,y)
-pipe(15,0,L1/2+22.5,L1,z)
-pipe(15,25,L1/2+22.5,L1,z)
-pipe(15,15,-L2/2-22.5,L2,z)
-pipe(15,0,-L2/2-22.5,L2,z)
-pipe(15,7.5,-22.5-L2,15,y)
-pipe(15,25+L3/2,22.5,L3,y)
-pipe(15,15+L3S/2,-22.5,L3S,y)
-pipe(15,L3+25,0,45,z)
+# pipe(15,0,0,45,z)
+# pipe(15,12.5,22.5,25,y)
+# pipe(15,7.5,-22.5,15,y)
+# pipe(15,12.5,22.5+L1,25,y)
+# pipe(15,0,L1/2+22.5,L1,z)
+# pipe(15,25,L1/2+22.5,L1,z)
+# pipe(15,15,-L2/2-22.5,L2,z)
+# pipe(15,0,-L2/2-22.5,L2,z)
+# pipe(15,7.5,-22.5-L2,15,y)
+# pipe(15,25+L3/2,22.5,L3,y)
+# pipe(15,15+L3S/2,-22.5,L3S,y)
+# pipe(15,L3+25,0,45,z)
 
-pipe(0,L3+25,0,30,x)
-pipe(0,25,22.5+L1,30,x)
-pipe(0,0,22.5+L1,30,x)
-pipe(0,15,-22.5-L2,30,x)
-pipe(0,0,-22.5-L2,30,x)
+ball(-15,0,22.5)
+ball(-15,0,-22.5)
+ball(-15,0,L1+22.5)
+ball(-15,25,22.5)
+ball(-15,25,L1+22.5)
+ball(-15,0,-L2-22.5)
+ball(-15,15,-L2-22.5)
+ball(-15,15,-22.5)
+ball(-15,L3+25,-22.5)
+ball(-15,L3+25,22.5)
 
+ball(15,0,22.5)
+ball(15,0,-22.5)
+ball(15,0,L1+22.5)
+ball(15,25,22.5)
+ball(15,25,L1+22.5)
+ball(15,0,-L2-22.5)
+ball(15,15,-L2-22.5)
+ball(15,15,-22.5)
+ball(15,L3+25,-22.5)
+ball(15,L3+25,22.5)
 
 
 
@@ -150,7 +156,7 @@ class App:
 		pyxel.init(600, 600)
 		self.points = []
 		self.tris = []
-		self.c = 8
+		self.c = 0
 		self.FOC = 0.3
 		pyxel.run(self.update, self.draw)
 		
@@ -165,20 +171,21 @@ class App:
 		self.FOC += pyxel.mouse_wheel/100
 		pyxel.camera(-300,-300)
 		vertices = []
+		
 		for vert in prevertices:
-			rotv = rotate(vert,radians(pyxel.mouse_x))
-			rotv2 = rotate_z(rotv,radians(pyxel.mouse_y))
-			#rotv2 = rotv 
+			rotv = rotate(vert,radians(self.c))
+			#rotv2 = rotate_z(rotv,radians(pyxel.mouse_y))
+			rotv2 = rotv 
 			vertices.append(rotv2)
 			#vertices.append([rotv[0],vert[1],vert[z]])
 		self.points.clear()
 		self.tris.clear()
 		for vert in vertices:
 			self.points.append(project(vert,self.FOC))
+		self.c += 5
 		
 		# Fix: Use enumerate to get the index count safely
 		for i, ind in enumerate(indices):
-			self.c = 8
 			self.center = (((self.points[ind[0]][x]+self.points[ind[1]][x]+self.points[ind[2]][x])/3),(self.points[ind[0]][y]+self.points[ind[1]][y]+self.points[ind[2]][y])/3)
 			self.tris.append(((self.points[ind[0]][x],self.points[ind[0]][y]),
 								(self.points[ind[1]][x],self.points[ind[1]][y]),

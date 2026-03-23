@@ -31,13 +31,16 @@ W_PURPLE2 = processColor("7F2C92",255)
 set_trace_log_level(TraceLogLevel.LOG_ERROR) 
 width,height=2000, 1000
 #1506, 768-45-30
-
+global nfds
+nfds = []
 profiles=[[]]
-def circleButton(x,y,radius,image,color):
+def circleButton(x,y,radius,image,color,strcol):
+    img = load_texture(str(os.path.relpath(__file__).replace("main.py",image+".png")))
     draw_circle(x,y,radius,color)
+    draw_texture(img,x-radius,y-radius,WHITE)
     if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_LEFT):
         if dist((get_mouse_x(),get_mouse_y()),(x,y)) <= radius:
-            draw_circle(x,y,radius,WHITE)
+            nfds.append(["draw_circle("+str(x)+","+str(y)+","+str(radius+5)+","+strcol+")",500])
             return(True)
     return(False)
     
@@ -50,7 +53,14 @@ async def main():
     while not window_should_close():
         begin_drawing()
         clear_background(BLACK)
-        if circleButton(789,135,25,NotImplemented,R_GREEN):
+        for I in nfds:
+            exec(I[0])
+            if I[1] > 0:
+                  I[1] -= 1
+            if I[1] == 0:
+                 nfds.remove(I)
+
+        if circleButton(1060,140,50,"DIVEBUTTON",R_GREEN,"R_GREEN"):
             x_values = []
             y_values = []
             for p in profiles[current_profile]:
@@ -78,7 +88,7 @@ async def main():
         draw_line(50,100,921,100,WHITE)
         draw_line(487,100,487,height,WHITE)
         
-        if circleButton(500,200,80,NotImplemented,W_PURPLE2):
+        if circleButton(1200,140,50,"GRAPHBUTTON",W_PURPLE2,"W_PURPLE2"):
             print("D")
             ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))
             ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))

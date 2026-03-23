@@ -1,12 +1,13 @@
 #include "ArduPID.h"
+#include "MS5837.h"
+#include <DS1307RTC.h>
 #include <SD.h>
 #include <SPI.h>
-
-#include <DS1307RTC.h>
+#include <Servo.h>
 #include <TimeLib.h>
 #include <Wire.h>
 const int chipSelect = BUILTIN_SDCARD;
-
+MS5837 sensor;
 #define RYLR Serial2
 TeensyPID pid;
 int holding = 0;
@@ -16,9 +17,29 @@ float depth = 0.0f;
 float output = 0.0f;
 char message;
 
+
+bool SIM = false;
+float descentDepth = 0.5; 
+
+
+Servo engine;
 IntervalTimer controlTimer;
 
 void controlLoop() { output = pid.compute(setpoint, depth); }
+
+void updateDepth() {
+    if (SIM) {
+        if (Serial.available() > 0) {
+            String line = Serial.readStringUntil('\n');
+            if (line.length() > 0) {
+                depth = line.toFloat();
+            }
+        }
+    }else{
+        depth = sensor.depth();
+        Serial.println(depth);
+    }
+}
 
 void wait() {
     while (true) {
@@ -43,7 +64,7 @@ void wait() {
 }
 
 void log() {
-    
+
     File datafile = SD.open("data.txt", FILE_WRITE);
     datafile.print("T");
     datafile.print(second() + (minute() * 60));
@@ -58,20 +79,14 @@ void log() {
 }
 
 void descend() {
-    setpoint = 2.5;
+    setpoint = descentDepth;
     holding = 0;
     while (true) {
-        //Serial.println("decsacewfojing");
+        // Serial.println("decsacewfojing");
         static elapsedMillis timer;
         static elapsedMillis datalogclock;
-        
 
-        if (Serial.available() > 0) {
-            String line = Serial.readStringUntil('\n');
-            if (line.length() > 0) {
-                depth = line.toFloat();
-            }
-        }
+        updateDepth();
 
         if (timer > 200) {
             timer = 0;
@@ -85,14 +100,12 @@ void descend() {
             Serial.println(holding);
             if (abs(2.5 - depth) < 0.5) {
                 holding++;
-            }
-            else{
+            } else {
                 holding = 0;
             }
-            if (holding > 5){
+            if (holding > 5) {
                 break;
             }
-
         }
     }
 }
@@ -104,17 +117,16 @@ void ascend() {
         static elapsedMillis timer;
         static elapsedMillis datalogclock;
 
-        if (Serial.available() > 0) {
-            String line = Serial.readStringUntil('\n');
-            if (line.length() > 0) {
-                depth = line.toFloat();
-            }
-        }
+        updateDepth();
 
         if (timer > 200) {
             timer = 0;
-            Serial.print("D");
-            Serial.println(output);
+            if (!SIM) {
+                Serial.print("D");
+                Serial.println(output);
+            } else {
+                engine.write(output);
+            }
         }
 
         if (datalogclock >= 5000) {
@@ -123,14 +135,12 @@ void ascend() {
             Serial.println(holding);
             if (abs(0.4 - depth) < 0.33) {
                 holding++;
-            }
-            else{
+            } else {
                 holding = 0;
             }
-            if (holding > 5){
+            if (holding > 5) {
                 break;
             }
-
         }
     }
 }
@@ -141,6 +151,9 @@ void setup() {
     RYLR.begin(115200);
     while (!RYLR) {
         Serial.println("D:");
+    }
+    if (!SIM) {
+        engine.attach(9);
     }
     Serial.println("conneted");
     RYLR.print("AT\r\n");
@@ -157,7 +170,15 @@ void setup() {
     } else {
         Serial.println(F("All files deleted"));
     }
-
+    if (!SIM) {
+        Serial.println("models et-1");
+        sensor.setModel(MS5837::MS5837_02BA); // Change to MS5837::MS5837_02BA
+        Serial.println("models et");
+        sensor.init();
+        Serial.println("models et2");
+        sensor.setFluidDensity(997); // kg/m^3 (997 freshwater, 1029 seawater)
+        Serial.println("models et3");
+    }
     delay(1000);
 
     pid.begin(1000.0f, // P - Proportional
@@ -176,54 +197,52 @@ void setup() {
     else
         Serial.println("RTC has set the system time");
 }
-void relay(){
-int lineindex = 0;
-char message;
+void relay() {
+    int lineindex = 0;
+    char message;
 
-Serial.println("yippee");
-File myFile = SD.open("data.txt");
-Serial.println("yippee1");
-//if (myFile) {
-Serial.println("Reading data.txt:");
-while (myFile.available()) {
-    String dataLine = myFile.readStringUntil(10, 1000);
+    Serial.println("yippee");
+    File myFile = SD.open("data.txt");
+    Serial.println("yippee1");
+    // if (myFile) {
+    Serial.println("Reading data.txt:");
+    while (myFile.available()) {
+        String dataLine = myFile.readStringUntil(10, 1000);
 
-    dataLine.trim();
+        dataLine.trim();
 
-    RYLR.print("AT+SEND=");
-    RYLR.print("82");
-    RYLR.print(",");
-    RYLR.print(dataLine.length());
-    RYLR.print(",");
-    RYLR.print(dataLine);
-    RYLR.print("\r\n");  // Critical: Module requires both \r and \n
+        RYLR.print("AT+SEND=");
+        RYLR.print("82");
+        RYLR.print(",");
+        RYLR.print(dataLine.length());
+        RYLR.print(",");
+        RYLR.print(dataLine);
+        RYLR.print("\r\n"); // Critical: Module requires both \r and \n
 
-    // Print to Serial Monitor for debugging
-    Serial.print("Command Sent: AT+SEND=");
-    Serial.print("82");
-    Serial.print(",");
-    Serial.print(dataLine.length());
-    Serial.print(",");
-    Serial.println(dataLine);
-    delay(0);
-    for (int i = 0; i < sizeof(dataLine); ++i) {
-    dataLine[i] = 0;
-    }
-    while (message != 'n' or dataLine == "stop") {
-    if (RYLR.available() > 0) {
-        String line = RYLR.readStringUntil(10, 1000);
-        Serial.println(line);
-        if (line[1] == 82 && line[2] == 67) {
-        Serial.print("message:");
-        message = line[10];
-        Serial.println(message);
+        // Print to Serial Monitor for debugging
+        Serial.print("Command Sent: AT+SEND=");
+        Serial.print("82");
+        Serial.print(",");
+        Serial.print(dataLine.length());
+        Serial.print(",");
+        Serial.println(dataLine);
+        delay(0);
+        for (int i = 0; i < sizeof(dataLine); ++i) {
+            dataLine[i] = 0;
         }
+        while (message != 'n' or dataLine == "stop") {
+            if (RYLR.available() > 0) {
+                String line = RYLR.readStringUntil(10, 1000);
+                Serial.println(line);
+                if (line[1] == 82 && line[2] == 67) {
+                    Serial.print("message:");
+                    message = line[10];
+                    Serial.println(message);
+                }
+            }
+        }
+        message = 'o';
     }
-    }
-    message = 'o';
-}
-
-
 }
 
 void loop() {
@@ -234,5 +253,4 @@ void loop() {
     Serial.println("ascending");
     ascend();
     relay();
-    
 }
