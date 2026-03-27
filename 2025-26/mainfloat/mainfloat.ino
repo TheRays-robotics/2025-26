@@ -43,7 +43,7 @@ void updateDepth() {
 
 void wait() {
     while (true) {
-        // Serial.println("D0");
+        
         if (RYLR.available() > 0) {
             String line = RYLR.readStringUntil(10, 1000);
             if (line[1] == 82 && line[2] == 67) {
@@ -82,7 +82,7 @@ void descend() {
     setpoint = descentDepth;
     holding = 0;
     while (true) {
-        // Serial.println("decsacewfojing");
+        
         static elapsedMillis timer;
         static elapsedMillis datalogclock;
 
@@ -111,7 +111,7 @@ void descend() {
 }
 
 void ascend() {
-    setpoint = 0.2;
+    setpoint = 0.4;
     holding = 0;
     while (true) {
         static elapsedMillis timer;
@@ -147,7 +147,7 @@ void ascend() {
 
 void setup() {
 
-    Serial.begin(115200); // Faster baud rate recommended for Teensy
+    Serial.begin(115200); 
     RYLR.begin(115200);
     while (!RYLR) {
         Serial.println("D:");
@@ -171,27 +171,23 @@ void setup() {
         Serial.println(F("All files deleted"));
     }
     if (!SIM) {
-        Serial.println("models et-1");
-        sensor.setModel(MS5837::MS5837_02BA); // Change to MS5837::MS5837_02BA
-        Serial.println("models et");
+        sensor.setModel(MS5837::MS5837_02BA); 
         sensor.init();
-        Serial.println("models et2");
-        sensor.setFluidDensity(997); // kg/m^3 (997 freshwater, 1029 seawater)
-        Serial.println("models et3");
+        sensor.setFluidDensity(997); 
     }
     delay(1000);
 
-    pid.begin(1000.0f, // P - Proportional
-              800.0f,  // I - Integral (helps reach exact setpoint)
-              5.0f,    // D - Derivative (prevents bouncing)
+    pid.begin(1000.0f, 
+              800.0f,  
+              5.0f,    
               0.001f,
-              0.0f,   // Min PID Output
-              180.0f, // Max PID Output
+              0.0f,   
+              180.0f, 
               TeensyPID::P_ON_E, TeensyPID::D_ON_M, TeensyPID::FORWARD, 0.0f);
 
     pid.setWindupLimits(0.0f, 180.0f);
     controlTimer.begin(controlLoop, 1000);
-    setSyncProvider(RTC.get); // the function to get the time from the RTC
+    setSyncProvider(RTC.get); 
     if (timeStatus() != timeSet)
         Serial.println("Unable to sync with the RTC");
     else
@@ -204,7 +200,7 @@ void relay() {
     Serial.println("yippee");
     File myFile = SD.open("data.txt");
     Serial.println("yippee1");
-    // if (myFile) {
+    
     Serial.println("Reading data.txt:");
     while (myFile.available()) {
         String dataLine = myFile.readStringUntil(10, 1000);
@@ -217,9 +213,9 @@ void relay() {
         RYLR.print(dataLine.length());
         RYLR.print(",");
         RYLR.print(dataLine);
-        RYLR.print("\r\n"); // Critical: Module requires both \r and \n
+        RYLR.print("\r\n"); 
 
-        // Print to Serial Monitor for debugging
+        
         Serial.print("Command Sent: AT+SEND=");
         Serial.print("82");
         Serial.print(",");

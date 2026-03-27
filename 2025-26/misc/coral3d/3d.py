@@ -119,7 +119,6 @@ def qsort(inlist):
 		return []
 	else:
 		pivot = inlist[0]
-		# Compare based on the 3rd element (index 2)
 		lesser = qsort([x for x in inlist[1:] if x[4] > pivot[4]])
 		greater = qsort([x for x in inlist[1:] if x[4] <= pivot[4]])
 		return lesser + [pivot] + greater
@@ -286,7 +285,6 @@ class App:
 		for vert in vertices:
 			self.points.append(project(vert,self.FOC))
 		
-		# Fix: Use enumerate to get the index count safely
 		for i, ind in enumerate(indices):
 			self.c = 8
 			self.center = (((self.points[ind[0]][x]+self.points[ind[1]][x]+self.points[ind[2]][x])/3),(self.points[ind[0]][y]+self.points[ind[1]][y]+self.points[ind[2]][y])/3)
