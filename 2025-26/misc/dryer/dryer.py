@@ -1,12 +1,14 @@
-from PIL import Image
-img = Image.open('misc/test.png')
+import cv2
 import numpy as np
-wc = (94, 152, 234)
-# pixel_array = np.array(img)
-# for x in range(img.width):
-#   for y in range(img.height):
-#     pixel = img.getpixel((x, y))
-pixels = list(img.getdata())
-pixel_array = [(int((r*2)/wc[0]), int((g*2)/wc[1]), int((b*2)/wc[2])) for (r, g, b) in pixels]
-img.putdata(pixel_array)
-img.show()
+import os
+
+# Define your constant
+img = cv2.imread(os.path.join(os.path.dirname(__file__), "test.png"))
+
+w = np.array([191, 155, 77], dtype=np.uint8)
+
+if img is not None:
+    img = np.clip(img.astype(np.int16) * 2 - w, 0, 255).astype(np.uint8)
+
+    cv2.imshow("gloop", img)
+    cv2.waitKey(0)

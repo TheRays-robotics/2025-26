@@ -60,7 +60,7 @@ async def main():
             if I[1] == 0:
                  nfds.remove(I)
 
-        if circleButton(1060,140,50,"DIVEBUTTON",R_GREEN,"R_GREEN"):
+        if circleButton(1060,140,50,"GRAPHBUTTON",R_GREEN,"R_GREEN"):
             x_values = []
             y_values = []
             for p in profiles[current_profile]:
@@ -88,7 +88,7 @@ async def main():
         draw_line(50,100,921,100,WHITE)
         draw_line(487,100,487,height,WHITE)
         
-        if circleButton(1200,140,50,"GRAPHBUTTON",W_PURPLE2,"W_PURPLE2"):
+        if circleButton(1200,140,50,"DIVEBUTTON",W_PURPLE2,"W_PURPLE2"):
             print("D")
             ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))
             ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
