@@ -29,6 +29,7 @@ Hibernia = platform(46.7504, -48.7819, -78, "Hibernia")
 SeaRose = platform(46.7895, -48.1417, -107, "SeaRose")
 TerraNova = platform(46.4, -48.4, -91, "TerraNova")
 Hebron = platform(46.544, -48.498, -93, "Hebron")
+Hebron = platform(46.544, -48.498, -93, "Hebron")
 
 platforms = [Hibernia, SeaRose, TerraNova, Hebron]
 evil = ice(46.2, -48.2, -80, 310)

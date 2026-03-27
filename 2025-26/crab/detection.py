@@ -3,13 +3,17 @@ import threading
 from inference_sdk import InferenceHTTPClient  # type: ignore
 import os
 
+MATEMODE = True
 
 with open(str(os.path.relpath(__file__).replace("detection.py","APIKEY.TXT")), "r", encoding="utf-8") as file:
         api = file.read().strip()
 
+
+
+
 client = InferenceHTTPClient(api_url="http://localhost:9001", api_key=api)
 
-video = cv2.VideoCapture(0)
+video = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 lastpredictions = []
 is_processing = False
@@ -46,10 +50,17 @@ while True:
         color = (0, 0, 255) if label == 'evil' else (0, 255, 0)
         if label == 'evil': evilometer += 1
         
-        cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-        cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-
-    cv2.putText(frame, "Evilometer:"+str(evilometer), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        if MATEMODE:
+            if label == "evil":
+                cv2.putText(frame, label.replace("evil","European"), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+        else:
+            cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+    if not MATEMODE:
+        cv2.putText(frame, "Evilometer : "+str(evilometer), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    else:
+        cv2.putText(frame, "invasive crab count : "+str(evilometer), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
     
     
     cv2.imshow('Roboflow Crab Detection', frame)
