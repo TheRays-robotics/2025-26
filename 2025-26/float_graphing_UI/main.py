@@ -43,7 +43,7 @@ def circleButton(x,y,radius,image,color,strcol):
             nfds.append(["draw_circle("+str(x)+","+str(y)+","+str(radius+5)+","+strcol+")",500])
             return(True)
     return(False)
-    
+teamnumber = "???"
 mainfont = str(os.path.relpath(__file__).replace("main.py","mononoki-Regular.ttf"))
 async def main():
     init_window(width, height, "soup")
@@ -71,6 +71,11 @@ async def main():
             plt.ylabel("Depth (m)")
             plt.title("Profile : "+str(current_profile+1))
             plt.show()
+
+        draw_text_ex(font,"The Rays",Vector2(0,0),40,2,R_GREEN)
+        draw_text_ex(font,"Team Number:"+teamnumber,Vector2(200,0),40,2,W_PURPLE2)
+        draw_line(190,0,190,50,WHITE)
+        
         draw_line(0,50,width,50,WHITE)
         draw_line(50,50,50,height,WHITE)
         draw_line(924,50,924,height,WHITE)
@@ -80,10 +85,12 @@ async def main():
         if get_mouse_x() <= 50:
                     for i in range (len(profiles)):
                         if get_mouse_y() > 51+(50*i) and get_mouse_y() < 50+51+(50*i):
-                            draw_rectangle_lines(0,51+(50*i),60,50,WHITE)
+                            draw_rectangle_lines(0,51+(50*i),50,50,WHITE)
                             if is_mouse_button_down(MouseButton.MOUSE_BUTTON_LEFT):
-                                draw_rectangle(0,51+(50*i),35,50,WHITE)
+                                draw_rectangle(0,51+(50*i),50,50,WHITE)
                                 current_profile = i
+                                draw_text_ex(font,str(i+1),Vector2(10,55+(50*i)),40,2,(W_PURPLE,W_PURPLE2)[i%2])
+
         
         draw_line(50,100,921,100,WHITE)
         draw_line(487,100,487,height,WHITE)
@@ -100,7 +107,6 @@ async def main():
             draw_text_ex(font,str(point[Y])+"(m)",Vector2(486,I*30+100),20,2,WHITE)
             draw_text_ex(font,str(point[X])+"(s)",Vector2(55,I*30+100),20,2,WHITE)
             draw_line(50,I*30+94,921,I*30+94,WHITE)
-        draw_fps(300,0)
         if DoSerial:
             if ser.in_waiting > 0:
                 line = str(ser.readline().decode(encoding="utf-8")).replace('\n',"")
