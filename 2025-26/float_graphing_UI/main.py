@@ -49,7 +49,7 @@ async def main():
     init_window(width, height, "soup")
     current_profile = 0
     line=""
-    font = load_font_ex((mainfont).encode(),30,None,0)
+    font = load_font_ex((mainfont).encode(),300,None,0)
     while not window_should_close():
         begin_drawing()
         clear_background(BLACK)
