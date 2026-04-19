@@ -10,6 +10,7 @@ const int chipSelect = BUILTIN_SDCARD;
 MS5837 sensor;
 #define RYLR Serial2
 TeensyPID pid;
+
 int holding = 0;
 int dataIndex = 0;
 float setpoint = 2.5f;
@@ -17,10 +18,9 @@ float depth = 0.0f;
 float output = 0.0f;
 char message;
 
-
 bool SIM = false;
-float descentDepth = 0.5; 
-
+float descentDepth = 0.25;
+float surfaceDepth = 0;
 
 Servo engine;
 IntervalTimer controlTimer;
@@ -35,15 +35,20 @@ void updateDepth() {
                 depth = line.toFloat();
             }
         }
-    }else{
-        depth = sensor.depth();
-        Serial.println(depth);
+    } else {
+        sensor.read();
+        // see caluclations
+        // https://docs.google.com/spreadsheets/d/1Wab4LbDww71lHrJmSqJ-hdIlBZDHO0Bx2nWjerMkGF4/edit?usp=sharing
+
+        depth =
+            max(0,(((-104 * ((sensor.depth() * -1)) + 45.1) / 100) - surfaceDepth));
     }
 }
 
 void wait() {
+    engine.writeMicroseconds(1000);
     while (true) {
-        
+
         if (RYLR.available() > 0) {
             String line = RYLR.readStringUntil(10, 1000);
             if (line[1] == 82 && line[2] == 67) {
@@ -54,10 +59,19 @@ void wait() {
                 line[i] = 0;
             }
         }
+        // Serial.println(message);
+        if (message == 'H') {
+            message = 'o';
+            engine.writeMicroseconds(1000);
+            RYLR.print("AT+SEND=82,2,hi");
+            RYLR.print("\r\n");
+            updateDepth();
+            surfaceDepth = depth;
+        }
         if (message == 'D') {
             message = 'o';
-            RYLR.print("AT+SEND=82,1");
-            RYLR.println(message);
+            // RYLR.print("AT+SEND=82,2,hi");
+            // RYLR.print("\r\n");
             break;
         }
     }
@@ -82,7 +96,7 @@ void descend() {
     setpoint = descentDepth;
     holding = 0;
     while (true) {
-        
+
         static elapsedMillis timer;
         static elapsedMillis datalogclock;
 
@@ -90,14 +104,31 @@ void descend() {
 
         if (timer > 200) {
             timer = 0;
-            Serial.print("D");
-            Serial.println(output);
+            if (SIM) {
+                Serial.print("D");
+                Serial.println(output);
+            } else {
+                output = map(output, 0, 180, 0, 100);
+                engine.write(output);
+                // engine.write(100);
+                Serial.print("D");
+                Serial.println(output);
+
+                String dataLine = String(depth)+" : "+String(output);
+                RYLR.print("AT+SEND=");
+                RYLR.print("82");
+                RYLR.print(",");
+                RYLR.print(dataLine.length());
+                RYLR.print(",");
+                RYLR.print(dataLine);
+                RYLR.print("\r\n");
+            }
         }
 
         if (datalogclock >= 5000) {
             datalogclock = 0;
             log();
-            Serial.println(holding);
+            // Serial.println(holding);
             if (abs(2.5 - depth) < 0.5) {
                 holding++;
             } else {
@@ -105,6 +136,23 @@ void descend() {
             }
             if (holding > 5) {
                 break;
+            }
+        }
+        if (RYLR.available() > 0) {
+            String line = RYLR.readStringUntil(10, 1000);
+            if (line[1] == 82 && line[2] == 67) {
+                message = line[10];
+            }
+            Serial.println(line);
+            for (int i = 0; i < sizeof(line); ++i) {
+                line[i] = 0;
+            }
+        }
+        if (message == 'E') {
+            message = 'o';
+            engine.write(0);
+            while (true){
+                delay(10);
             }
         }
     }
@@ -121,10 +169,11 @@ void ascend() {
 
         if (timer > 200) {
             timer = 0;
-            if (!SIM) {
+            if (SIM) {
                 Serial.print("D");
                 Serial.println(output);
             } else {
+                output = map(output, 0, 180, 0, 100);
                 engine.write(output);
             }
         }
@@ -147,7 +196,7 @@ void ascend() {
 
 void setup() {
 
-    Serial.begin(115200); 
+    Serial.begin(115200);
     RYLR.begin(115200);
     while (!RYLR) {
         Serial.println("D:");
@@ -171,23 +220,25 @@ void setup() {
         Serial.println(F("All files deleted"));
     }
     if (!SIM) {
-        sensor.setModel(MS5837::MS5837_02BA); 
-        sensor.init();
-        sensor.setFluidDensity(997); 
+        Wire.begin();
+        sensor.setModel(MS5837::MS5837_02BA);
+        while (!sensor.init()) {
+            Serial.println("Init failed!");
+            Serial.println("Are SDA/SCL connected correctly?");
+            Serial.println("Blue Robotics Bar30: White=SDA, Green=SCL");
+            Serial.println("\n\n\n");
+            delay(500);
+        }
+        sensor.setFluidDensity(997);
     }
     delay(1000);
 
-    pid.begin(1000.0f, 
-              800.0f,  
-              5.0f,    
-              0.001f,
-              0.0f,   
-              180.0f, 
-              TeensyPID::P_ON_E, TeensyPID::D_ON_M, TeensyPID::FORWARD, 0.0f);
+    pid.begin(1000.0f, 800.0f, 5.0f, 0.001f, 0.0f, 180.0f, TeensyPID::P_ON_E,
+              TeensyPID::D_ON_M, TeensyPID::FORWARD, 0.0f);
 
     pid.setWindupLimits(0.0f, 180.0f);
     controlTimer.begin(controlLoop, 1000);
-    setSyncProvider(RTC.get); 
+    setSyncProvider(RTC.get);
     if (timeStatus() != timeSet)
         Serial.println("Unable to sync with the RTC");
     else
@@ -200,7 +251,7 @@ void relay() {
     Serial.println("yippee");
     File myFile = SD.open("data.txt");
     Serial.println("yippee1");
-    
+
     Serial.println("Reading data.txt:");
     while (myFile.available()) {
         String dataLine = myFile.readStringUntil(10, 1000);
@@ -213,9 +264,8 @@ void relay() {
         RYLR.print(dataLine.length());
         RYLR.print(",");
         RYLR.print(dataLine);
-        RYLR.print("\r\n"); 
+        RYLR.print("\r\n");
 
-        
         Serial.print("Command Sent: AT+SEND=");
         Serial.print("82");
         Serial.print(",");

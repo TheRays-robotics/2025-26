@@ -3,13 +3,15 @@ from pyray import *
 import os
 from math import dist
 import colorutils
+from random import randint
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import serial
 import re
 from time import sleep
-
+global connected
+connected = 0
 global line
 global expectedIndex
 try:
@@ -48,6 +50,7 @@ mainfont = str(os.path.relpath(__file__).replace("main.py","mononoki-Regular.ttf
 async def main():
     init_window(width, height, "soup")
     current_profile = 0
+    connected = 0
     line=""
     font = load_font_ex((mainfont).encode(),300,None,0)
     while not window_should_close():
@@ -71,7 +74,7 @@ async def main():
             plt.ylabel("Depth (m)")
             plt.title("Profile : "+str(current_profile+1))
             plt.show()
-
+        draw_text_ex(font,("WHERE ARE YOU!?!?","ok hi :)")[connected],Vector2(1100+(randint(0,10)-5)*((connected+1)%2),400+(randint(0,10)-5)*((connected+1)%2)),40,2,R_GREEN)
         draw_text_ex(font,"The Rays",Vector2(0,0),40,2,R_GREEN)
         draw_text_ex(font,"Team Number:"+teamnumber,Vector2(200,0),40,2,W_PURPLE2)
         draw_line(190,0,190,50,WHITE)
@@ -95,6 +98,12 @@ async def main():
         draw_line(50,100,921,100,WHITE)
         draw_line(487,100,487,height,WHITE)
         
+        # if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_RIGHT):
+        #     connected = 1
+
+        if circleButton(1340,140,50,"HIBUTTON",BLUE,"BLUE"):
+            ser.write(bytes('AT+SEND=27,1,H\r\n',"utf-8"))
+
         if circleButton(1200,140,50,"DIVEBUTTON",W_PURPLE2,"W_PURPLE2"):
             print("D")
             ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))
@@ -111,6 +120,8 @@ async def main():
             if ser.in_waiting > 0:
                 line = str(ser.readline().decode(encoding="utf-8")).replace('\n',"")
                 print(line)
+                if "hi" in line:
+                     connected = 1
                 if "N" in line:
                     print(int(re.findall(r"N.*N",line)[-1].strip("N")),len(profiles[-1]))
                     if int(re.findall(r"N.*N",line)[-1].strip("N")) == len(profiles[-1]):

@@ -32,18 +32,50 @@ Hebron = platform(46.544, -48.498, -93, "Hebron")
 Hebron = platform(46.544, -48.498, -93, "Hebron")
 
 platforms = [Hibernia, SeaRose, TerraNova, Hebron]
+global evil
 evil = ice(46.2, -48.2, -80, 310)
+
+
+async def input():
+    init_window(100, 100, "soup")
+    set_trace_log_level(TraceLogLevel.LOG_ERROR)
+    w = get_monitor_width(get_current_monitor()) - 900
+    h = get_monitor_height(get_current_monitor()) - 300
+    string = ""
+    things = ["lat","long","head","depth"]
+    i = 0
+    set_window_size(w, h)
+    set_window_position(int(w/3),40)
+    while not window_should_close():
+        begin_drawing()
+        clear_background(WHITE)
+        key = get_char_pressed()
+        if (key!=0 and key not in [47]):
+            string+=chr(key)
+            print(key)
+        if key == 47:
+            exec("evil."+things[i]+" = float(string)")
+            string=""
+            i+=1
+        if not i == 4:    
+            draw_text(things[i]+":"+string,10,0,50,BLACK)
+        end_drawing()
+    close_window()
+
+
 
 async def main():
     init_window(100, 100, "soup")
     set_trace_log_level(TraceLogLevel.LOG_ERROR)
     w = get_monitor_width(get_current_monitor()) - 900
     h = get_monitor_height(get_current_monitor()) - 300
+    string = ""
     set_window_size(w, h)
     set_window_position(int(w/3),40)
     while not window_should_close():
         begin_drawing()
         clear_background(WHITE)
+        
 
         slon_ice, slat_ice = getSpos(evil.lat, evil.lon, w, h)
         
@@ -106,5 +138,8 @@ async def main():
 
         end_drawing()
     close_window()
+
+
+asyncio.run(input())
 
 asyncio.run(main())
