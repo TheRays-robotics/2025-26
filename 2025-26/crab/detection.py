@@ -13,7 +13,7 @@ with open(str(os.path.relpath(__file__).replace("detection.py","APIKEY.TXT")), "
 
 client = InferenceHTTPClient(api_url="http://localhost:9001", api_key=api)
 
-video = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+# video = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 lastpredictions = []
 is_processing = False
@@ -28,8 +28,7 @@ def do_inference(frame_to_process):
 print("Press 'q' to quit.")
 
 while True:
-    ret, frame = video.read()
-    if not ret: break
+    frame = cv2.imread(str(os.path.relpath(__file__).replace("detection.py","image.png")))
     frame = cv2.resize(frame, (320, 320))
 
     

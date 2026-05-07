@@ -21,7 +21,7 @@ doserial = True
 ser = serial.Serial('COM6', 9600, timeout=5, write_timeout=0) 
 
 
-L, G, S, M = 100, 9.8, 11.2, 6.8
+L, G, S, M = 100, 9.8, 24.73, 4.53
 sm = M
 Y, V, EM = 0, 0, 0
 
@@ -32,7 +32,7 @@ while not window_should_close():
             line = ser.readline().decode().strip()
             print(line)
             if "D" in line:
-                M = sm + ((float(line.replace("D","")) / 180) * 5) + EM
+                M = sm + (((float(line.replace("D",""))-1000) / 655) * 8) + EM
             
         except: pass
 
@@ -46,7 +46,7 @@ while not window_should_close():
     
     if screen_y + 20 > L:
         sub = max(0, min(1.0, (screen_y + 20 - L) / 40.0))
-        total_force -= (S * sub * 10) 
+        total_force -= (S * sub) 
         V *= 1 - (sub * 0.05)
 
     V += (total_force / M) * dt
