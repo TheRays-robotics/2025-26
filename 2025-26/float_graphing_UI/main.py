@@ -52,6 +52,7 @@ async def main():
     current_profile = 0
     connected = False
     line=""
+    sleep(0.00001)
     font = load_font_ex((mainfont).encode(),300,None,0)
     while not window_should_close():
         begin_drawing()
@@ -105,8 +106,10 @@ async def main():
         if circleButton(1340,140,50,"HIBUTTON",BLUE,"BLUE"):
             if not connected:
                 ser.write(bytes('AT+SEND=27,1,H\r\n',"utf-8"))
+                print("H")
             else:
                 ser.write(bytes('AT+SEND=27,1,r\r\n',"utf-8"))
+                print("n")
         if circleButton(1200,140,50,"DIVEBUTTON",W_PURPLE2,"W_PURPLE2"):
             print("D")
             ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))

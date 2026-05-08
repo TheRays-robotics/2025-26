@@ -19,9 +19,9 @@ float depth = 0.0f;
 float output = 0.0f;
 char message;
 
-bool SIM = false;
-float descentDepth = 1;
-float Icesheet = 0;
+bool SIM = true;
+float descentDepth = 2.5;
+float Icesheet = 0.4;
 float surfaceDepth = 0;
 
 Servo engine;
@@ -42,23 +42,19 @@ void relay() {
     int lineindex = 0;
     char message;
 
-    Serial.println("yippee");
     File myFile = SD.open("data.txt");
-    Serial.println("yippee1");
 
-    Serial.println("Reading data.txt:");
     while (myFile.available()) {
         String dataLine = myFile.readStringUntil(10, 1000);
-
+        delay(500);
         dataLine.trim();
 
         if (dataLine.length() > 0) {
+            delay(500);
+
             sendradiomessage(dataLine);
-            // Small delay to prevent flooding the RYLR buffer
-            delay(100);
             Serial.println("Sent: " + dataLine);
         }
-        dataLine = "";
         while (message != 'n' or dataLine == "stop") {
             if (RYLR.available() > 0) {
                 String line = RYLR.readStringUntil(10, 1000);
@@ -69,6 +65,8 @@ void relay() {
                     Serial.println(message);
                 }
             }
+        dataLine = "";
+
             if (message == 'r') {
                 sendradiomessage(dataLine);
                 message = 'o';
@@ -111,7 +109,7 @@ void wait() {
         // Serial.println(message);
         if (message == 'H') {
             message = 'o';
-            lights.print("m");
+            lights.print("r");
             engine.writeMicroseconds(1000);
             RYLR.print("AT+SEND=82,2,hi");
             RYLR.print("\r\n");
@@ -216,7 +214,7 @@ void ascend() {
                 Serial.println(output);
             } else {
                 sendradiomessage(
-                    "ASCENDEING" + String(depth) + " : " + String(output) +
+                    "ASCE" + String(depth) + " : " + String(output) +
                     " ERROR: " + String(abs(Icesheet - depth)) + "," +
                     String(setpoint) + "HOLDE:" + String(holding));
                 engine.writeMicroseconds(int(output));
@@ -261,7 +259,8 @@ void setup() {
     Serial.begin(115200);
     RYLR.begin(115200);
     lights.begin(9600);
-    while (!Serial && millis() < 4000); // Wait up to 4s for Serial Monitor
+    while (!Serial && millis() < 4000)
+        ; // Wait up to 4s for Serial Monitor
     Serial.println("--- STARTING SETUP ---");
     while (!RYLR) {
         Serial.println("D:");
@@ -298,7 +297,7 @@ void setup() {
     }
     delay(1000);
 
-    pid.begin(1000.0f, 0.0f, 0.0f, 0.1f, 1000.0f, 1655.0f, TeensyPID::P_ON_E,
+    pid.begin(1000.0f, 1.0f, 0.0f, 0.1f, 1000.0f, 1655.0f, TeensyPID::P_ON_E,
               TeensyPID::D_ON_E, TeensyPID::FORWARD, 0.0f);
 
     pid.setWindupLimits(1000.0f, 1655.0f);
@@ -308,13 +307,10 @@ void setup() {
         Serial.println("Unable to sync with the RTC");
     else
         Serial.println("RTC has set the system time");
-
-    
-
 }
 
 void loop() {
-    lights.println("r");
+    lights.println("w");
     wait();
 
     lights.println("y");
@@ -328,8 +324,9 @@ void loop() {
 
     lights.println("b");
     ascend();
-    
+
     lights.println("m");
     relay();
-    while (true){}
+    while (true) {
+    }
 }

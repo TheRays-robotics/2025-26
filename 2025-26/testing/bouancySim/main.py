@@ -32,7 +32,7 @@ while not window_should_close():
             line = ser.readline().decode().strip()
             print(line)
             if "D" in line:
-                M = sm + (((float(line.replace("D",""))-1000) / 655) * 8) + EM
+                M = sm + (((float(line.replace("D",""))-1000) / 655) * 50) + EM
             
         except: pass
 
@@ -46,11 +46,11 @@ while not window_should_close():
     
     if screen_y + 20 > L:
         sub = max(0, min(1.0, (screen_y + 20 - L) / 40.0))
-        total_force -= (S * sub) 
+        total_force -= (S * sub) *10
         V *= 1 - (sub * 0.05)
 
     V += (total_force / M) * dt
-    Y += V * dt
+    Y += V * dt 
     if Y > 4: Y, V = 4, V * -0.1
 
     
