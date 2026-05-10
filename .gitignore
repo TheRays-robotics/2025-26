@@ -1,2 +1,4 @@
-# Created by venv; see https://docs.python.org//library/venv.html
-
+*.ini
+crab/out/*
+output.mp4
+crab/APIKEY.TXT
