@@ -96,6 +96,7 @@ void updateDepth() {
 
 void wait() {
     engine.writeMicroseconds(1000);
+    Serial.println("WATING");
     while (true) {
 
         if (RYLR.available() > 0) {
@@ -175,7 +176,7 @@ void descend() {
                 holding = 0;
             }
             // holding = 0;
-            if (holding > 5) {
+            if (holding > 10) {
                 break;
             }
         }
@@ -232,7 +233,7 @@ void ascend() {
                 holding = 0;
             }
             // holding = 0;
-            if (holding > 5) {
+            if (holding > 10) {
                 break;
             }
         }
@@ -273,7 +274,6 @@ void setup() {
     Serial.println("Sent 'AT\\r\\n' command. Waiting for response...");
     if (!SD.begin(BUILTIN_SDCARD)) {
         Serial.println("SD Card Initialization Failed!");
-
         return;
     }
     SD.remove("data.txt");
