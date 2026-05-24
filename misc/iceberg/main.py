@@ -2,6 +2,7 @@ import asyncio
 from pyray import *
 from math import cos, sin, radians as rad
 from haversine import haversine
+import os
 
 def scale(value, istart, istop, ostart, ostop):
     return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
@@ -17,6 +18,7 @@ class platform:
         self.lon = long
         self.depth = depth
         self.name = name
+        self.danger = 0
 
 class ice:
     def __init__(self, lat, long, depth, head):
@@ -33,8 +35,12 @@ Hebron = platform(46.544, -48.498, -93, "Hebron")
 
 platforms = [Hibernia, SeaRose, TerraNova, Hebron]
 global evil
-evil = ice(47.52, -48.4, 51 ,180-190)
 
+with open(str(os.path.relpath(__file__).replace("main.py","ICEBEARG.TXT")), "r", encoding="utf-8") as file:
+            evil = ice(float(file.readline().strip()), float(file.readline().strip()),float(file.readline().strip()),float(file.readline().strip()))
+evildirlon = sin(rad(evil.head)) * 0.005
+if evil.lon + evildirlon < evil.lon:
+    evil.head += 180
 
 
 async def main():
@@ -86,11 +92,13 @@ async def main():
             ind = platforms.index(P)
 
             draw_rectangle(100, 100 + (100 * ind),1000,int((100*(len(platforms)-2))/2),GREEN)
-            if GD < 10:
-                if GD < 5:
+            if GD < 10 or P.danger > 0:
+                if GD < 5 or P.danger > 1:
                     draw_rectangle(100, 100 + (100 * ind),500,100, RED)
+                    P.danger = 2
                 else:
                     draw_rectangle(100, 100 + (100 * ind),500,100, YELLOW)
+                    P.danger = 1
             if 0.9 < evil.depth/P.depth < 1.1:
                 draw_rectangle(600, 100 + (100 * ind),500,100, RED)
             if 0.7 < evil.depth/P.depth < 0.9:
