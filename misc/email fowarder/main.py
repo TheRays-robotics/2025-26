@@ -27,14 +27,14 @@ while True:
             sleep(1)
             email = 'theraysbattlebot@gmail.com' # Your email
             
-            subject = "goop"
+            subject = "Pitcuer"
             msg = MIMEMultipart()
             msg['From'] = email
             msg['To'] = to
             msg['Subject'] = subject
             
             # Attach the message to the MIMEMultipart object
-            msg.attach(MIMEText("goop", 'plain'))    
+            msg.attach(MIMEText("beep boop", 'plain'))    
 
 
             ImgFileName = direct+"/"+str(f)

@@ -3,7 +3,7 @@ import threading
 from inference_sdk import InferenceHTTPClient  # type: ignore
 import os
 
-MATEMODE = True
+MATEMODE = 0
 
 with open(str(os.path.relpath(__file__).replace("detection.py","APIKEY.TXT")), "r", encoding="utf-8") as file:
         api = file.read().strip()
