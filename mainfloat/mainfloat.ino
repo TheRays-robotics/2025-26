@@ -19,9 +19,9 @@ float depth = 0.0f;
 float output = 0.0f;
 char message;
 
-bool SIM = true;
-float descentDepth = 2.5;
-float Icesheet = 0.4;
+bool SIM = false;
+float descentDepth = 2;
+float Icesheet = 1;
 float surfaceDepth = 0;
 
 Servo engine;
@@ -65,7 +65,7 @@ void relay() {
                     Serial.println(message);
                 }
             }
-        dataLine = "";
+            dataLine = "";
 
             if (message == 'r') {
                 sendradiomessage(dataLine);
@@ -89,8 +89,9 @@ void updateDepth() {
         // see caluclations
         // https://docs.google.com/spreadsheets/d/1Wab4LbDww71lHrJmSqJ-hdIlBZDHO0Bx2nWjerMkGF4/edit?usp=sharing
 
-        depth = max(0, (((-104 * ((sensor.depth() * -1)) + 45.1) / 100) -
-                        surfaceDepth));
+        float extra = 0.9;
+
+        depth = max(0, (((-104 * ((sensor.depth() * -1)) + 45.1) / 100) - surfaceDepth)) + extra;
     }
 }
 
@@ -176,7 +177,7 @@ void descend() {
                 holding = 0;
             }
             // holding = 0;
-            if (holding > 10) {
+            if (holding > 5) {
                 break;
             }
         }
@@ -233,7 +234,7 @@ void ascend() {
                 holding = 0;
             }
             // holding = 0;
-            if (holding > 10) {
+            if (holding > 7) {
                 break;
             }
         }

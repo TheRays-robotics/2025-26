@@ -5,11 +5,11 @@
 Adafruit_NeoPixel strip1(16, 10, NEO_RGB + NEO_KHZ800);
 Adafruit_NeoPixel strip2(16, 11, NEO_RGB + NEO_KHZ800);
 Adafruit_NeoPixel strip3(16, 9, NEO_RGB + NEO_KHZ800);
-Adafruit_NeoPixel strip4(16, 8, NEO_RGB + NEO_KHZ800);
+Adafruit_NeoPixel strip4(16, 3, NEO_RGB + NEO_KHZ800);
 float NO = 0;
-int R = 0;
-int G = 0;
-int B = 0;
+int R = 255;
+int G = 255;
+int B = 255;
 
 void setup() {
     Serial1.begin(9600);
@@ -77,7 +77,7 @@ void loop() {
         strip2.show(); // Send the updated pixel colors to the hardware.
         strip3.setPixelColor(i*4+int(NO), strip3.Color(G, R, B));
         strip3.show();
-        strip4.setPixelColor(i*4+int(NO), strip4.Color(G, R, B));
+        strip4.setPixelColor(i*6+int(NO), strip4.Color(G/2, R/2, B/2));
         strip4.show();
     }
     NO += 0.1;
