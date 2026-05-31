@@ -12,17 +12,18 @@ MS5837 sensor;
 #define lights Serial1
 TeensyPID pid;
 
-int holding = 0;
-int dataIndex = 0;
+int holding = 0;   // how long the float has been maintaing depth
+int dataIndex = 0; // current data point index
 float setpoint = 0.0f;
 float depth = 0.0f;
 float output = 0.0f;
 char message;
 
-bool SIM = false;
+bool SIM = false; // weather or not its in simualtion mode
 float descentDepth = 2;
-float Icesheet = 1;
-float surfaceDepth = 0;
+float Icesheet = 1 + 0.4;//during the test that produced the graph i sent had this set to 1.
+
+float surfaceDepth = 0; // the depth offset
 
 Servo engine;
 IntervalTimer controlTimer;
@@ -42,19 +43,20 @@ void relay() {
     int lineindex = 0;
     char message;
 
-    File myFile = SD.open("data.txt");
+    File myFile = SD.open("data.txt"); // open the file
 
     while (myFile.available()) {
-        String dataLine = myFile.readStringUntil(10, 1000);
+        String dataLine = myFile.readStringUntil(10, 1000); // get just one line
         delay(500);
-        dataLine.trim();
+        dataLine.trim(); // remove any nonsense
 
         if (dataLine.length() > 0) {
             delay(500);
-
             sendradiomessage(dataLine);
             Serial.println("Sent: " + dataLine);
         }
+
+        // wait for the topside to acknowledge
         while (message != 'n' or dataLine == "stop") {
             if (RYLR.available() > 0) {
                 String line = RYLR.readStringUntil(10, 1000);
@@ -66,7 +68,6 @@ void relay() {
                 }
             }
             dataLine = "";
-
             if (message == 'r') {
                 sendradiomessage(dataLine);
                 message = 'o';
@@ -75,7 +76,6 @@ void relay() {
         message = 'o';
     }
 }
-
 void updateDepth() {
     if (SIM) {
         if (Serial.available() > 0) {
@@ -84,13 +84,14 @@ void updateDepth() {
                 depth = line.toFloat();
             }
         }
-    } else {
+    } 
+    else {
         sensor.read();
         // see caluclations
         // https://docs.google.com/spreadsheets/d/1Wab4LbDww71lHrJmSqJ-hdIlBZDHO0Bx2nWjerMkGF4/edit?usp=sharing
 
-        float extra = 0.9;
-
+        float extra = 1;
+        // idr why is its even like that
         depth = max(0, (((-104 * ((sensor.depth() * -1)) + 45.1) / 100) - surfaceDepth)) + extra;
     }
 }
@@ -147,7 +148,7 @@ void descend() {
     holding = 0;
     while (true) {
 
-        static elapsedMillis timer;
+        static elapsedMillis timer;  // setup timers
         static elapsedMillis datalogclock;
 
         updateDepth();
@@ -158,10 +159,11 @@ void descend() {
                 Serial.print("D");
                 Serial.println(output);
             } else {
-                sendradiomessage(
-                    String(depth) + " : " + String(output) +
-                    " ERROR: " + String(abs(descentDepth - depth)) + "," +
-                    String(setpoint) + "HOLDE:" + String(holding));
+
+                //send a debug message
+                sendradiomessage(String(depth) + " : " + String(output) +" ERROR: " + String(abs(descentDepth - depth)) + "," +String(setpoint) + "HOLDE:" + String(holding));
+                
+                //move the syringe acourding to the PID controller 
                 engine.writeMicroseconds(int(output));
                 // engine.writeMicroseconds(100);
             }
@@ -170,13 +172,13 @@ void descend() {
         if (datalogclock >= 5000) {
             datalogclock = 0;
             log();
-            // Serial.println(holding);
+
             if (abs(descentDepth - depth) < 0.5) {
                 holding++;
             } else {
                 holding = 0;
             }
-            // holding = 0;
+
             if (holding > 5) {
                 break;
             }
@@ -189,7 +191,7 @@ void descend() {
             Serial.println(line);
             line = "";
         }
-        if (message == 'E') {
+        if (message == 'E') {// emergancy stop
             message = 'o';
             engine.writeMicroseconds(0);
             while (true) {
@@ -215,12 +217,9 @@ void ascend() {
                 Serial.print("D");
                 Serial.println(output);
             } else {
-                sendradiomessage(
-                    "ASCE" + String(depth) + " : " + String(output) +
-                    " ERROR: " + String(abs(Icesheet - depth)) + "," +
-                    String(setpoint) + "HOLDE:" + String(holding));
+                // debug message
+                sendradiomessage("ASC" + String(depth) + " : " + String(output) +" ERROR: " + String(abs(Icesheet - depth)) + "," +String(setpoint) + "HOLDE:" + String(holding));
                 engine.writeMicroseconds(int(output));
-                // engine.writeMicroseconds(100);
             }
         }
 
@@ -311,6 +310,8 @@ void setup() {
 }
 
 void loop() {
+    //the lights take single charectors over serial corrisponding to predefined colours 
+
     lights.println("w");
     wait();
 
@@ -328,6 +329,8 @@ void loop() {
 
     lights.println("m");
     relay();
+
+    lights.println("k");
     while (true) {
     }
 }
