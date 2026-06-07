@@ -116,6 +116,13 @@ async def main():
 
             print("D")
 
+        if circleButton(1200,500,50,"DIVEBUTTON",YELLOW,"YELLOW"):
+            print("D")
+            ser.write(bytes('AT+SEND=27,1,E\r\n',"utf-8"))
+
+            print("D")
+
+
         for point in profiles[current_profile]:
             I = profiles[current_profile].index(point)
             draw_text_ex(font,str(point[Y])+"(m)",Vector2(486,I*30+100),20,2,WHITE)

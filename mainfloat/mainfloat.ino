@@ -10,25 +10,26 @@ const int chipSelect = BUILTIN_SDCARD;
 MS5837 sensor;
 #define RYLR Serial2
 #define lights Serial1
-TeensyPID pid;
+ArduPID pid;
 
 int holding = 0;   // how long the float has been maintaing depth
 int dataIndex = 0; // current data point index
-float setpoint = 0.0f;
 float depth = 0.0f;
 float output = 0.0f;
 char message;
 
 bool SIM = false; // weather or not its in simualtion mode
 float descentDepth = 2;
-float Icesheet = 1 + 0.4;//during the test that produced the graph i sent had this set to 1.
+float Icesheet =
+    1 +
+    0.4; // during the test that produced the graph i sent had this set to 1.
+float setpoint = descentDepth;
 
 float surfaceDepth = 0; // the depth offset
 
 Servo engine;
-IntervalTimer controlTimer;
 
-void controlLoop() { output = pid.compute(setpoint, depth); }
+double Kp = 500, Ki = 0, Kd = 0; // Just a starting point
 
 void sendradiomessage(String msg) {
     RYLR.print("AT+SEND=");
@@ -84,15 +85,20 @@ void updateDepth() {
                 depth = line.toFloat();
             }
         }
-    } 
-    else {
+    } else {
         sensor.read();
         // see caluclations
         // https://docs.google.com/spreadsheets/d/1Wab4LbDww71lHrJmSqJ-hdIlBZDHO0Bx2nWjerMkGF4/edit?usp=sharing
 
         float extra = 1;
         // idr why is its even like that
-        depth = max(0, (((-104 * ((sensor.depth() * -1)) + 45.1) / 100) - surfaceDepth)) + extra;
+        // i remembered
+        // our depth sensor spits out wrong depth values but they are roughly
+        // linear with the real ones. the math stuff is to convert that to
+        // normal
+        depth = max(0, (((-104 * ((sensor.depth() * -1)) + 45.1) / 100) -
+                        surfaceDepth)) +
+                extra;
     }
 }
 
@@ -148,32 +154,31 @@ void descend() {
     holding = 0;
     while (true) {
 
-        static elapsedMillis timer;  // setup timers
         static elapsedMillis datalogclock;
 
         updateDepth();
+        output = pid.compute(depth);
 
-        if (timer > 20) {
-            timer = 0;
-            if (SIM) {
-                Serial.print("D");
-                Serial.println(output);
-            } else {
+        if (SIM) {
+            Serial.print("D");
+            Serial.println(output);
+        } else {
 
-                //send a debug message
-                sendradiomessage(String(depth) + " : " + String(output) +" ERROR: " + String(abs(descentDepth - depth)) + "," +String(setpoint) + "HOLDE:" + String(holding));
-                
-                //move the syringe acourding to the PID controller 
-                engine.writeMicroseconds(int(output));
-                // engine.writeMicroseconds(100);
-            }
+            // send a debug message
+            sendradiomessage(String(depth) + " : " + String(output) +
+                             " ERROR: " + String(abs(descentDepth - depth)) +
+                             "," + String(setpoint) +
+                             "HOLDE:" + String(holding));
+
+            // move the syringe acourding to the PID controller
+            engine.writeMicroseconds(int(output));
         }
 
         if (datalogclock >= 5000) {
             datalogclock = 0;
             log();
 
-            if (abs(descentDepth - depth) < 0.5) {
+            if (abs(descentDepth - depth) < 0.33) {
                 holding++;
             } else {
                 holding = 0;
@@ -191,9 +196,9 @@ void descend() {
             Serial.println(line);
             line = "";
         }
-        if (message == 'E') {// emergancy stop
+        if (message == 'E') { // emergancy stop
             message = 'o';
-            engine.writeMicroseconds(0);
+            engine.writeMicroseconds(1000);
             while (true) {
                 delay(10);
             }
@@ -203,31 +208,32 @@ void descend() {
 
 void ascend() {
     setpoint = Icesheet;
+    pid.setSetpoint(setpoint);
+
     holding = 0;
     while (true) {
 
-        static elapsedMillis timer;
         static elapsedMillis datalogclock;
 
         updateDepth();
+        output = pid.compute(depth);
 
-        if (timer > 20) {
-            timer = 0;
-            if (SIM) {
-                Serial.print("D");
-                Serial.println(output);
-            } else {
-                // debug message
-                sendradiomessage("ASC" + String(depth) + " : " + String(output) +" ERROR: " + String(abs(Icesheet - depth)) + "," +String(setpoint) + "HOLDE:" + String(holding));
-                engine.writeMicroseconds(int(output));
-            }
+        if (SIM) {
+            Serial.print("D");
+            Serial.println(output);
+        } else {
+            // debug message
+            sendradiomessage("ASC" + String(depth) + " : " + String(output) +
+                             " ERROR: " + String(abs(Icesheet - depth)) + "," +
+                             String(setpoint) + "HOLDE:" + String(holding));
+            engine.writeMicroseconds(int(output));
         }
 
         if (datalogclock >= 5000) {
             datalogclock = 0;
             log();
             // Serial.println(holding);
-            if (abs(Icesheet - depth) < 0.5) {
+            if (abs(Icesheet - depth) < 0.33) {
                 holding++;
             } else {
                 holding = 0;
@@ -245,9 +251,9 @@ void ascend() {
             Serial.println(line);
             line = "";
         }
-        if (message == 'E') {
+        if (message == 'E') { // emergency stop
             message = 'o';
-            engine.writeMicroseconds(0);
+            engine.writeMicroseconds(1000);
             while (true) {
                 delay(10);
             }
@@ -297,11 +303,13 @@ void setup() {
     }
     delay(1000);
 
-    pid.begin(1000.0f, 1.0f, 0.0f, 0.1f, 1000.0f, 1655.0f, TeensyPID::P_ON_E,
-              TeensyPID::D_ON_E, TeensyPID::FORWARD, 0.0f);
-
-    pid.setWindupLimits(1000.0f, 1655.0f);
-    controlTimer.begin(controlLoop, 1000);
+    // pid(); // According to the ArduPID.cpp this initializes with default
+    pid.setSetpoint(setpoint);
+    pid.setTunings(Kp, Ki, Kd);
+    pid.setOutputLimits(1000.0f, 1655.0f);
+    // pid.setPMode(P_ON_E);
+    // pid.setAntiWindMode(NONE);
+    // pid.setDirection(FORWARD);
     setSyncProvider(RTC.get);
     if (timeStatus() != timeSet)
         Serial.println("Unable to sync with the RTC");
@@ -310,7 +318,8 @@ void setup() {
 }
 
 void loop() {
-    //the lights take single charectors over serial corrisponding to predefined colours 
+    // the lights take single charectors over serial corrisponding to predefined
+    // colours
 
     lights.println("w");
     wait();

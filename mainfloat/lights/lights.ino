@@ -10,6 +10,28 @@ float NO = 0;
 int R = 255;
 int G = 255;
 int B = 255;
+float hue = 0;
+
+float fract(float x) { return x - int(x); }
+
+float mix(float a, float b, float t) { return a + (b - a) * t; }
+
+float step(float e, float x) { return x < e ? 0.0 : 1.0; }
+
+float *hsv2rgb(float h, float s, float b, float *rgb) {
+    rgb[0] =
+        b *
+        mix(1.0, constrain(abs(fract(h + 1.0) * 6.0 - 3.0) - 1.0, 0.0, 1.0), s);
+    rgb[1] = b * mix(1.0,
+                     constrain(abs(fract(h + 0.6666666) * 6.0 - 3.0) - 1.0, 0.0,
+                               1.0),
+                     s);
+    rgb[2] = b * mix(1.0,
+                     constrain(abs(fract(h + 0.3333333) * 6.0 - 3.0) - 1.0, 0.0,
+                               1.0),
+                     s);
+    return rgb;
+}
 
 void setup() {
     Serial1.begin(9600);
@@ -18,66 +40,82 @@ void setup() {
     strip3.begin();
     strip4.begin();
 }
-
+bool rainbow = false;
 void loop() {
     // strip1.setPixelColor(random(0,16-1), strip1.Color(random(0,25)*10,
     // random(0,25)*10, random(0,25)*10));
 
     if (Serial1.available() > 0) {
         char c = Serial1.read();
-        if (c == 'r') {
-            R = 50;
-            G = 0;
-            B = 0;
-        }
-        if (c == 'g') {
-            R = 0;
-            G = 50;
-            B = 0;
-        }
-        if (c == 'b') {
-            R = 0;
-            G = 0;
-            B = 50;
-        }
-        if (c == 'w') {
-            R = 50;
-            G = 50;
-            B = 50;
-        }
-        if (c == 'c') {
-            R = 0;
-            G = 50;
-            B = 50;
-        }
-        if (c == 'y') {
-            R = 50;
-            G = 30;
-            B = 0;
-        }
-        if (c == 'm') {
-            R = 50;
-            G = 0;
-            B = 50;
-        }
-        if (c == 'k') {
-            R = 0;
-            G = 0;
-            B = 0;
+        if (c == 'R') {
+            rainbow = true;
+        } else {
+            if (c == 'r') {
+                R = 255;
+                G = 0;
+                B = 0;
+            }
+            if (c == 'g') {
+                R = 0;
+                G = 255;
+                B = 0;
+            }
+            if (c == 'b') {
+                R = 0;
+                G = 0;
+                B = 255;
+            }
+            if (c == 'w') {
+                R = 255;
+                G = 255;
+                B = 255;
+            }
+            if (c == 'c') {
+                R = 0;
+                G = 255;
+                B = 255;
+            }
+            if (c == 'y') {
+                R = 255;
+                G = 200;
+                B = 0;
+            }
+            if (c == 'm') {
+                R = 255;
+                G = 0;
+                B = 255;
+            }
+            if (c == 'k') {
+                R = 0;
+                G = 0;
+                B = 0;
+            }
+            rainbow = false;
         }
     }
+    // if (rainbow) {
+    //     hue = float((int;
+    //     Serial.println(hue);
+    //     float rgb[3] = {R, G, B};
+    //     hsv2rgb(hue/100, 1.0, 1.0, rgb);
+    //     R = rgb[0]*255;
+    //     G = rgb[1]*255;
+    //     B = rgb[2]*255;
+    // }
+
     strip1.clear();
     strip2.clear();
     strip3.clear();
     strip4.clear();
     for (int i = 0; i <= 4; i += 1) {
-        strip1.setPixelColor(i*4+int(NO), strip1.Color(G, R, B));
+        strip1.setPixelColor(i * 4 + int(NO), strip1.Color(G, R, B));
         strip1.show(); // Send the updated pixel colors to the hardware.
-        strip2.setPixelColor(i*4+int(NO), strip2.Color(G, R, B));
+        strip2.setPixelColor(i * 4 + int(NO), strip2.Color(G, R, B));
         strip2.show(); // Send the updated pixel colors to the hardware.
-        strip3.setPixelColor(i*4+int(NO), strip3.Color(G, R, B));
+        strip3.setPixelColor(i * 4 + int(NO), strip3.Color(G, R, B));
         strip3.show();
-        strip4.setPixelColor(i*6+int(NO), strip4.Color(G/2, R/2, B/2));
+        strip4.setPixelColor(i * 6 + int(NO),
+                             strip4.Color(G / 2, R / 2, B / 2));
         strip4.show();
     }
     NO += 0.1;
