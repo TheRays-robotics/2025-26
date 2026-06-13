@@ -53,7 +53,6 @@ if measure:
 				p1 = clicks[-2]
 				p2 = clicks[-1]
 				
-				# Calculate distance using box_w as a scale (e.g., 10cm wide)
 				pixel_dist = dist(p1, p2)
 				real_dist = round(pixel_dist / (box_w / 10), 2)
 				

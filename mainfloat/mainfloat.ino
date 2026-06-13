@@ -20,16 +20,14 @@ char message;
 
 bool SIM = false; // weather or not its in simualtion mode
 float descentDepth = 2;
-float Icesheet =
-    1 +
-    0.4; // during the test that produced the graph i sent had this set to 1.
+float Icesheet = 0.4;
 float setpoint = descentDepth;
 
 float surfaceDepth = 0; // the depth offset
 
 Servo engine;
 
-double Kp = 500, Ki = 0, Kd = 0; // Just a starting point
+double Kp = 900.0, Ki = 300.0, Kd = 0.0;
 
 void sendradiomessage(String msg) {
     RYLR.print("AT+SEND=");
@@ -45,14 +43,29 @@ void relay() {
     char message;
 
     File myFile = SD.open("data.txt"); // open the file
+    while (true) {
+        if (RYLR.available() > 0) {
+            String line = RYLR.readStringUntil(10, 1000);
+            if (line[1] == 82 && line[2] == 67) {
+                message = line[10];
+            }
+            line = "";
+        }
+        if (message == 'U') { // This means the float has been recovered and
+                              // should upload data
+            message = 'o';
+            engine.write(0);
+            lights.println("R");
+            break;
 
+        }
+    }
     while (myFile.available()) {
         String dataLine = myFile.readStringUntil(10, 1000); // get just one line
         delay(500);
         dataLine.trim(); // remove any nonsense
 
         if (dataLine.length() > 0) {
-            delay(500);
             sendradiomessage(dataLine);
             Serial.println("Sent: " + dataLine);
         }
@@ -76,6 +89,7 @@ void relay() {
         }
         message = 'o';
     }
+    sendradiomessage("stop");
 }
 void updateDepth() {
     if (SIM) {
@@ -90,7 +104,7 @@ void updateDepth() {
         // see caluclations
         // https://docs.google.com/spreadsheets/d/1Wab4LbDww71lHrJmSqJ-hdIlBZDHO0Bx2nWjerMkGF4/edit?usp=sharing
 
-        float extra = 1;
+        float extra = 0;
         // idr why is its even like that
         // i remembered
         // our depth sensor spits out wrong depth values but they are roughly
@@ -151,25 +165,23 @@ void log() {
 
 void descend() {
     setpoint = descentDepth;
+    pid.setSetpoint(setpoint);
     holding = 0;
     while (true) {
 
         static elapsedMillis datalogclock;
 
         updateDepth();
-        output = pid.compute(depth);
-
+        pid.compute(depth);
+        output = pid.getSignals().out;
+        // send a debug message
+        sendradiomessage(String(depth) + " : " + String(output) +
+                         " ERROR: " + String(abs(descentDepth - depth)) + "," +
+                         String(setpoint) + "HOLDE:" + String(holding));
         if (SIM) {
             Serial.print("D");
             Serial.println(output);
         } else {
-
-            // send a debug message
-            sendradiomessage(String(depth) + " : " + String(output) +
-                             " ERROR: " + String(abs(descentDepth - depth)) +
-                             "," + String(setpoint) +
-                             "HOLDE:" + String(holding));
-
             // move the syringe acourding to the PID controller
             engine.writeMicroseconds(int(output));
         }
@@ -208,7 +220,9 @@ void descend() {
 
 void ascend() {
     setpoint = Icesheet;
+    pid.compute(depth);
     pid.setSetpoint(setpoint);
+    output = pid.getSignals().out;
 
     holding = 0;
     while (true) {
@@ -216,16 +230,16 @@ void ascend() {
         static elapsedMillis datalogclock;
 
         updateDepth();
-        output = pid.compute(depth);
-
+        pid.compute(depth);
+        output = pid.getSignals().out;
+        // send a debug message
+        sendradiomessage(String(depth) + " : " + String(output) +
+                         " ERROR: " + String(abs(descentDepth - depth)) + "," +
+                         String(setpoint) + "HOLDE:" + String(holding));
         if (SIM) {
             Serial.print("D");
             Serial.println(output);
         } else {
-            // debug message
-            sendradiomessage("ASC" + String(depth) + " : " + String(output) +
-                             " ERROR: " + String(abs(Icesheet - depth)) + "," +
-                             String(setpoint) + "HOLDE:" + String(holding));
             engine.writeMicroseconds(int(output));
         }
 
@@ -302,14 +316,16 @@ void setup() {
         sensor.setFluidDensity(997);
     }
     delay(1000);
-
-    // pid(); // According to the ArduPID.cpp this initializes with default
+    Serial.setTimeout(10);
     pid.setSetpoint(setpoint);
     pid.setTunings(Kp, Ki, Kd);
     pid.setOutputLimits(1000.0f, 1655.0f);
+    pid.setDirection((ArduPID::Direction)1);
+    pid.setAntiWindMode((ArduPID::AntiWindMode)1);
+    // pid.setWindUpLimits(-50.0f, 50.0f);
     // pid.setPMode(P_ON_E);
     // pid.setAntiWindMode(NONE);
-    // pid.setDirection(FORWARD);
+    // pid.setDirection(0);
     setSyncProvider(RTC.get);
     if (timeStatus() != timeSet)
         Serial.println("Unable to sync with the RTC");
@@ -321,8 +337,10 @@ void loop() {
     // the lights take single charectors over serial corrisponding to predefined
     // colours
 
-    lights.println("w");
-    wait();
+    if (!SIM) {
+        lights.print("R");
+        wait();
+    }
 
     lights.println("y");
     descend();
@@ -339,7 +357,7 @@ void loop() {
     lights.println("m");
     relay();
 
-    lights.println("k");
+    lights.println("w");
     while (true) {
     }
 }

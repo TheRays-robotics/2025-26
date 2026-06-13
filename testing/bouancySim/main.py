@@ -9,7 +9,6 @@ img_path = os.path.join(base_path, "float.png")
 init_window(400, 800, "FLOAT SIM")
 set_target_fps(60)
 
-
 texture = None
 if os.path.exists(img_path):
     image = load_image(img_path)
@@ -21,7 +20,7 @@ doserial = True
 ser = serial.Serial('COM6', 9600, timeout=5, write_timeout=0) 
 
 
-L, G, S, M = 100, 9.8, 24.73, 4.53
+L, G, S, M = 100, 9.8, 11.2, 6.8
 sm = M
 Y, V, EM = 0, 0, 0
 
@@ -32,26 +31,29 @@ while not window_should_close():
             line = ser.readline().decode().strip()
             print(line)
             if "D" in line:
-                M = sm + (((float(line.replace("D",""))-1000) / 655) * 50) + EM
-            
+                syri = ((float(line.replace("D","")) - 1000) / 655) * 7
+                print(syri)
+                M = sm
+                M += EM 
+                if syri != 0:
+                    M +=syri
         except: pass
-
-    
     dt = get_frame_time()
     if is_mouse_button_pressed(0): EM += 1
     if is_mouse_button_pressed(1): EM -= 1
     
-    screen_y = (Y * 170) + L
+    screen_y = (Y * (170/2)) + L
+
     total_force = M * G
     
     if screen_y + 20 > L:
         sub = max(0, min(1.0, (screen_y + 20 - L) / 40.0))
-        total_force -= (S * sub) *10
+        total_force -= (S * sub * 10) 
         V *= 1 - (sub * 0.05)
 
     V += (total_force / M) * dt
-    Y += V * dt 
-    if Y > 4: Y, V = 4, V * -0.1
+    Y += V * dt
+    if Y > 8: Y, V = 8, V * -0.1
 
     
     begin_drawing()

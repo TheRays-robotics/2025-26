@@ -7,9 +7,9 @@ Adafruit_NeoPixel strip2(16, 11, NEO_RGB + NEO_KHZ800);
 Adafruit_NeoPixel strip3(16, 9, NEO_RGB + NEO_KHZ800);
 Adafruit_NeoPixel strip4(16, 3, NEO_RGB + NEO_KHZ800);
 float NO = 0;
-int R = 255;
-int G = 255;
-int B = 255;
+float R = 255;
+float G = 255;
+float B = 255;
 float hue = 0;
 
 float fract(float x) { return x - int(x); }
@@ -19,17 +19,9 @@ float mix(float a, float b, float t) { return a + (b - a) * t; }
 float step(float e, float x) { return x < e ? 0.0 : 1.0; }
 
 float *hsv2rgb(float h, float s, float b, float *rgb) {
-    rgb[0] =
-        b *
-        mix(1.0, constrain(abs(fract(h + 1.0) * 6.0 - 3.0) - 1.0, 0.0, 1.0), s);
-    rgb[1] = b * mix(1.0,
-                     constrain(abs(fract(h + 0.6666666) * 6.0 - 3.0) - 1.0, 0.0,
-                               1.0),
-                     s);
-    rgb[2] = b * mix(1.0,
-                     constrain(abs(fract(h + 0.3333333) * 6.0 - 3.0) - 1.0, 0.0,
-                               1.0),
-                     s);
+    rgb[0] = b * mix(1.0, constrain(fabs(fract(h + 1.0) * 6.0 - 3.0) - 1.0, 0.0, 1.0), s);
+    rgb[1] = b * mix(1.0, constrain(fabs(fract(h + 0.6666666) * 6.0 - 3.0) - 1.0, 0.0, 1.0), s);
+    rgb[2] = b * mix(1.0, constrain(fabs(fract(h + 0.3333333) * 6.0 - 3.0) - 1.0, 0.0, 1.0), s);
     return rgb;
 }
 
@@ -77,7 +69,7 @@ void loop() {
             }
             if (c == 'y') {
                 R = 255;
-                G = 200;
+                G = 150;
                 B = 0;
             }
             if (c == 'm') {
@@ -93,15 +85,18 @@ void loop() {
             rainbow = false;
         }
     }
-    // if (rainbow) {
-    //     hue = float((int;
-    //     Serial.println(hue);
-    //     float rgb[3] = {R, G, B};
-    //     hsv2rgb(hue/100, 1.0, 1.0, rgb);
-    //     R = rgb[0]*255;
-    //     G = rgb[1]*255;
-    //     B = rgb[2]*255;
-    // }
+    if (rainbow) {
+        hue += 0.001;
+        if (hue >= 1) {
+            hue = 0;
+        }
+        Serial.println(hue);
+        float rgb[3];
+        hsv2rgb(hue, 1.0, 1.0, rgb);
+        R = rgb[0] * 255;
+        G = rgb[1] * 255;
+        B = rgb[2] * 255;
+    }
 
     strip1.clear();
     strip2.clear();
