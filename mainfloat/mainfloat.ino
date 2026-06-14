@@ -19,7 +19,7 @@ float output = 0.0f;
 char message;
 
 bool SIM = false; // weather or not its in simualtion mode
-float descentDepth = 2;
+float descentDepth = 1;
 float Icesheet = 0.4;
 float setpoint = descentDepth;
 
@@ -27,7 +27,7 @@ float surfaceDepth = 0; // the depth offset
 
 Servo engine;
 
-double Kp = 900.0, Ki = 300.0, Kd = 0.0;
+double Kp = 720.0, Ki = 40.0, Kd = 0.0;
 
 void sendradiomessage(String msg) {
     RYLR.print("AT+SEND=");
@@ -44,6 +44,10 @@ void relay() {
 
     File myFile = SD.open("data.txt"); // open the file
     while (true) {
+        updateDepth();
+        pid.compute(depth);
+        output = pid.getSignals().out;
+        engine.writeMicroseconds(int(output));
         if (RYLR.available() > 0) {
             String line = RYLR.readStringUntil(10, 1000);
             if (line[1] == 82 && line[2] == 67) {
@@ -55,9 +59,8 @@ void relay() {
                               // should upload data
             message = 'o';
             engine.write(0);
-            lights.println("R");
+            lights.println("w");
             break;
-
         }
     }
     while (myFile.available()) {
