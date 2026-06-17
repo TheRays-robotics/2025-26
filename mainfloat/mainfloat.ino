@@ -21,13 +21,14 @@ char message;
 bool SIM = false; // weather or not its in simualtion mode
 float descentDepth = 1;
 float Icesheet = 0.4;
+//0.46
 float setpoint = descentDepth;
 
 float surfaceDepth = 0; // the depth offset
 
 Servo engine;
 
-double Kp = 720.0, Ki = 40.0, Kd = 0.0;
+double Kp = 360.0, Ki = 18, Kd = 0.0;
 
 void sendradiomessage(String msg) {
     RYLR.print("AT+SEND=");

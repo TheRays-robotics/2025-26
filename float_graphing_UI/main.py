@@ -104,15 +104,21 @@ async def main():
         if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_RIGHT):
             connected = not connected
 
-        if circleButton(1340,140,50,"HIBUTTON",BLUE,"BLUE"):
-            ser.write(bytes('AT+SEND=27,1,H\r\n',"utf-8"))
-            print("H")
-        if circleButton(1480,140,50,"HIBUTTON",RED,"RED"):
-            ser.write(bytes('AT+SEND=27,1,U\r\n',"utf-8"))
-            print("U")
         if circleButton(1200,140,50,"DIVEBUTTON",W_PURPLE2,"W_PURPLE2"):
             print("D")
             ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))
+
+        if circleButton(1340,140,50,"HIBUTTON",BLUE,"BLUE"):
+            ser.write(bytes('AT+SEND=27,1,H\r\n',"utf-8"))
+            print("H")
+
+        if circleButton(1480,140,50,"DATABUTTON",YELLOW,"YELLOW"):
+            ser.write(bytes('AT+SEND=27,1,U\r\n',"utf-8"))
+            print("U")
+        
+        if circleButton(1620,140,50,"HEYBUTTON",RED,"RED"):
+            ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
+            print("n")
 
         # if circleButton(1200,500,50,"DIVEBUTTON",YELLOW,"YELLOW"):
         #     print("D")
