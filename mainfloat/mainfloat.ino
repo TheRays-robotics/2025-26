@@ -10,7 +10,7 @@ const int chipSelect = BUILTIN_SDCARD;
 MS5837 sensor;
 #define RYLR Serial2
 #define lights Serial1
-ArduPID pid;
+
 
 int holding = 0;   // how long the float has been maintaing depth
 int dataIndex = 0; // current data point index
@@ -19,9 +19,9 @@ float output = 0.0f;
 char message;
 
 bool SIM = false; // weather or not its in simualtion mode
-float descentDepth = 1;
-float Icesheet = 0.4;
-//0.46
+float descentDepth = 1.1+1;
+float Icesheet = 0.4 + 1;
+// 0.46
 float setpoint = descentDepth;
 
 float surfaceDepth = 0; // the depth offset
@@ -29,6 +29,50 @@ float surfaceDepth = 0; // the depth offset
 Servo engine;
 
 double Kp = 360.0, Ki = 18, Kd = 0.0;
+
+float fastTol = 0.20; // meters
+float slowTol = 0.05; // meters
+float fastMiSc = 315; // micro seconds
+float slowMiSc = 50;
+
+void controller() {
+    // output = 1327;
+    // if (depth - slowTol < setpoint) {
+    //     Serial.println("slowdown");
+    //     output = 1327 + slowMiSc;
+    // } else if (depth - fastTol < setpoint) {
+    //     Serial.println("slowup");
+    //     output = 1327 + fastMiSc;
+    // }
+    float error = setpoint - depth;
+    Serial.print("E");
+    Serial.println(error);
+    // Serial.print("I");
+    // Serial.println(depth);
+    // Serial.print("S");
+    // Serial.println(setpoint);
+    if (fabs(error) <= slowTol) {
+        // State 3: inside target window. Do not chase noise.
+        output = 1327;
+        Serial.println("HOLD_WINDOW");
+    } else if (error > fastTol) {
+        // State 1: VP is far above/shallower than target. Move down quickly.
+        output = 1327 + fastMiSc;
+        Serial.println("FAST_DEEPER");
+    } else if (error > slowTol) {
+        // State 2: VP is just above/shallower than target. Move down gently.
+        output = 1327 + slowMiSc;
+        Serial.println("SLOW_DEEPER");
+    } else if (error < -fastTol) {
+        // State 5: VP is far below/deeper than target. Move up quickly.
+        output = 1327 - fastMiSc;
+        Serial.println("FAST_SHALLOWER");
+    } else {
+        // State 4: VP is just below/deeper than target. Move up gently.
+        output = 1327 - slowMiSc;
+        Serial.println("SLOW_SHALLOWER");
+    }
+}
 
 void sendradiomessage(String msg) {
     RYLR.print("AT+SEND=");
@@ -46,8 +90,8 @@ void relay() {
     File myFile = SD.open("data.txt"); // open the file
     while (true) {
         updateDepth();
-        pid.compute(depth);
-        output = pid.getSignals().out;
+        controller();
+
         engine.writeMicroseconds(int(output));
         if (RYLR.available() > 0) {
             String line = RYLR.readStringUntil(10, 1000);
@@ -108,7 +152,7 @@ void updateDepth() {
         // see caluclations
         // https://docs.google.com/spreadsheets/d/1Wab4LbDww71lHrJmSqJ-hdIlBZDHO0Bx2nWjerMkGF4/edit?usp=sharing
 
-        float extra = 0;
+        float extra = 1;
         // idr why is its even like that
         // i remembered
         // our depth sensor spits out wrong depth values but they are roughly
@@ -141,6 +185,8 @@ void wait() {
             RYLR.print("AT+SEND=82,2,hi");
             RYLR.print("\r\n");
             updateDepth();
+        controller();
+
             surfaceDepth = depth;
         }
         if (message == 'D') {
@@ -169,15 +215,15 @@ void log() {
 
 void descend() {
     setpoint = descentDepth;
-    pid.setSetpoint(setpoint);
+
     holding = 0;
     while (true) {
 
         static elapsedMillis datalogclock;
 
         updateDepth();
-        pid.compute(depth);
-        output = pid.getSignals().out;
+        controller();
+
         // send a debug message
         sendradiomessage(String(depth) + " : " + String(output) +
                          " ERROR: " + String(abs(descentDepth - depth)) + "," +
@@ -186,7 +232,7 @@ void descend() {
             Serial.print("D");
             Serial.println(output);
         } else {
-            // move the syringe acourding to the PID controller
+
             engine.writeMicroseconds(int(output));
         }
 
@@ -224,9 +270,8 @@ void descend() {
 
 void ascend() {
     setpoint = Icesheet;
-    pid.compute(depth);
-    pid.setSetpoint(setpoint);
-    output = pid.getSignals().out;
+
+
 
     holding = 0;
     while (true) {
@@ -234,8 +279,9 @@ void ascend() {
         static elapsedMillis datalogclock;
 
         updateDepth();
-        pid.compute(depth);
-        output = pid.getSignals().out;
+
+                controller();
+
         // send a debug message
         sendradiomessage(String(depth) + " : " + String(output) +
                          " ERROR: " + String(abs(descentDepth - depth)) + "," +
@@ -321,15 +367,8 @@ void setup() {
     }
     delay(1000);
     Serial.setTimeout(10);
-    pid.setSetpoint(setpoint);
-    pid.setTunings(Kp, Ki, Kd);
-    pid.setOutputLimits(1000.0f, 1655.0f);
-    pid.setDirection((ArduPID::Direction)1);
-    pid.setAntiWindMode((ArduPID::AntiWindMode)1);
-    // pid.setWindUpLimits(-50.0f, 50.0f);
-    // pid.setPMode(P_ON_E);
-    // pid.setAntiWindMode(NONE);
-    // pid.setDirection(0);
+
+
     setSyncProvider(RTC.get);
     if (timeStatus() != timeSet)
         Serial.println("Unable to sync with the RTC");

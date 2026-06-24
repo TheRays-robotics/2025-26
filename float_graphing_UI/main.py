@@ -119,6 +119,9 @@ async def main():
         if circleButton(1620,140,50,"HEYBUTTON",RED,"RED"):
             ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
             print("n")
+        if circleButton(1480,280,50,"NONE",BLACK,"YELLOW"):
+            ser.write(bytes('AT+SEND=27,1,U\r\n',"utf-8"))
+            print("U")
 
         # if circleButton(1200,500,50,"DIVEBUTTON",YELLOW,"YELLOW"):
         #     print("D")
