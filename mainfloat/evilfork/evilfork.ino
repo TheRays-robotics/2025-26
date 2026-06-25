@@ -1,9 +1,10 @@
 #include "MS5837.h"
 #include <SPI.h>
-#include <Servo.h>
+#include <ServoTimer2.h>
 #include <Wire.h>
+#include <AltSoftSerial.h>
 MS5837 sensor;
-#define RYLR Serial1
+AltSoftSerial RYLR;
 
 byte holding = 0;   // how long the float has been maintaing depth
 int dataIndex = 0; // current data point index
@@ -20,14 +21,14 @@ float setpoint = descentDepth;
 
 float surfaceDepth = 0; // the depth offset
 
-Servo engine;
+ServoTimer2 engine;
 
 float fastTol = 0.20; // meters
 float slowTol = 0.05; // meters
 float fastMiSc = 315; // micro seconds
 float slowMiSc = 50;
 
-const byte datasizelenght = 180;
+const byte datasizelenght = 90;
 
 byte cdi = 0;
 
@@ -77,7 +78,7 @@ void relay() {
         updateDepth();
         controller();
         
-        engine.writeMicroseconds(int(output));
+        engine.write(int(output));
         if (RYLR.available() > 0) {
             String line = RYLR.readStringUntil('\n');
             if (line[1] == 82 && line[2] == 67) {
@@ -88,7 +89,7 @@ void relay() {
         if (message == 'U') { // This means the float has been recovered and
                               // should upload data
             message = 'o';
-            engine.write(0);
+            engine.write(1000);
             break;
         }
     }
@@ -144,7 +145,7 @@ void updateDepth() {
 }
 
 void wait() {
-    engine.writeMicroseconds(1000);
+    engine.write(1000);
     Serial.println("WATING");
     while (true) {
 
@@ -159,7 +160,7 @@ void wait() {
         // Serial.println(message);
         if (message == 'H') {
             message = 'o';
-            engine.writeMicroseconds(1000);
+            engine.write(1000);
             RYLR.print("AT+SEND=82,2,hi");
             RYLR.print("\r\n");
             updateDepth();
@@ -200,7 +201,7 @@ void descend() {
             Serial.println(output);
         } else {
 
-            engine.writeMicroseconds(int(output));
+            engine.write(int(output));
         }
 
         if (millis() - startTimelog >= 5000) {
@@ -227,7 +228,7 @@ void descend() {
         }
         if (message == 'E') { // emergancy stop
             message = 'o';
-            engine.writeMicroseconds(1000);
+            engine.write(1000);
             while (true) {
                 delay(10);
             }
@@ -255,7 +256,7 @@ void ascend() {
             Serial.print("D");
             Serial.println(output);
         } else {
-            engine.writeMicroseconds(int(output));
+            engine.write(int(output));
         }
 
         if (millis() - startTimelog >= 5000) {
@@ -282,7 +283,7 @@ void ascend() {
         }
         if (message == 'E') { // emergency stop
             message = 'o';
-            engine.writeMicroseconds(1000);
+            engine.write(1000);
             while (true) {
                 delay(10);
             }
@@ -292,8 +293,8 @@ void ascend() {
 
 void setup() {
 
-    Serial.begin(115200);
-    RYLR.begin(115200);
+    Serial.begin(9600);
+    RYLR.begin(9600);
     Serial.println("HI GUYS");
     for (int i = 0; i <= datasizelenght; i++) {
         depths[i] = 51;
@@ -315,13 +316,11 @@ void setup() {
     while (!Serial && millis() < 4000)
         ; // Wait up to 4s for Serial Monitor
     Serial.println("--- STARTING SETUP ---");
-    while (!RYLR) {
-        Serial.println("D:");
-    }
+    
+
     if (!SIM) {
-        engine.attach(9);
+        engine.attach(5);
     }
-    Serial.println("conneted");
     RYLR.print("AT\r\n");
     Serial.println("Sent 'AT\\r\\n' command. Waiting for response...");
 

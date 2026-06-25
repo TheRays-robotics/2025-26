@@ -15,7 +15,7 @@ connected = False
 global line
 global expectedIndex
 try:
-    ser = serial.Serial('COM4', 115200,timeout=100)
+    ser = serial.Serial('COM4', 9600,timeout=100)
     DoSerial = True
 except:
     DoSerial = False
@@ -120,7 +120,7 @@ async def main():
             ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
             print("n")
         if circleButton(1480,280,50,"NONE",BLACK,"YELLOW"):
-            ser.write(bytes('AT+SEND=27,1,U\r\n',"utf-8"))
+            ser.write(bytes('AT+SEND=27,1,E\r\n',"utf-8"))
             print("U")
 
         # if circleButton(1200,500,50,"DIVEBUTTON",YELLOW,"YELLOW"):
