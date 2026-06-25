@@ -15,7 +15,7 @@ connected = False
 global line
 global expectedIndex
 try:
-    ser = serial.Serial('COM7', 115200,timeout=100)
+    ser = serial.Serial('COM4', 115200,timeout=100)
     DoSerial = True
 except:
     DoSerial = False

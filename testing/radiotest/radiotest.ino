@@ -1,4 +1,4 @@
-#define RYLR Serial2
+#define RYLR Serial1
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
