@@ -14,8 +14,8 @@ char message;
 int startTime = 0;
 int startTimelog = 0;
 bool SIM = false; // weather or not its in simualtion mode
-float descentDepth = 1.1 + 1;
-float Icesheet = 0.4 + 1;
+float descentDepth = 1.5;
+float Icesheet = 1;
 // 0.46
 float setpoint = descentDepth;
 
@@ -327,14 +327,14 @@ void setup() {
     if (!SIM) {
         Wire.begin();
         sensor.setModel(MS5837::MS5837_02BA);
-        while (!sensor.init()) {
-            Serial.println("Init failed!");
-            Serial.println("Are SDA/SCL connected correctly?");
-            Serial.println("Blue Robotics Bar30: White=SDA, Green=SCL");
-            Serial.println("\n\n\n");
-            delay(500);
-        }
-        sensor.setFluidDensity(997);
+        // while (!sensor.init()) {
+        //     Serial.println("Init failed!");
+        //     Serial.println("Are SDA/SCL connected correctly?");
+        //     Serial.println("Blue Robotics Bar30: White=SDA, Green=SCL");
+        //     Serial.println("\n\n\n");
+        //     delay(500);
+        // }
+        // sensor.setFluidDensity(997);
     }
     delay(1000);
     Serial.setTimeout(10);

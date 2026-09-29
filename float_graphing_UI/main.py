@@ -42,7 +42,7 @@ def circleButton(x,y,radius,image,color,strcol):
     draw_texture(img,x-radius,y-radius,WHITE)
     if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_LEFT):
         if dist((get_mouse_x(),get_mouse_y()),(x,y)) <= radius:
-            nfds.append(["draw_circle("+str(x)+","+str(y)+","+str(radius+5)+","+strcol+")",5])
+            nfds.append(["draw_circle("+str(x)+","+str(y)+","+str(radius+5)+","+strcol+")",50])
             return(True)
     return(False)
 teamnumber = "RN27"
@@ -77,7 +77,7 @@ async def main():
             plt.title("Profile : "+str(current_profile+1))
             plt.show()
         draw_text_ex(font,("WHERE ARE YOU!?!?","ok hi :)")[connected],Vector2(1100+(randint(0,10)-5)*((connected+1)%2),400+(randint(0,10)-5)*((connected+1)%2)),40,2,R_GREEN)
-        draw_text_ex(font,("RADIO??","")[DoSerial],Vector2(1100+(randint(0,10)-5)*((DoSerial+1)%2),500+(randint(0,10)-5)*((DoSerial+1)%2)),40,2,R_GREEN)
+        draw_text_ex(font,("RADIO??","")[1],Vector2(1100+(randint(0,10)-5)*((DoSerial+1)%2),500+(randint(0,10)-5)*((DoSerial+1)%2)),40,2,R_GREEN)
         draw_text_ex(font,"The Rays",Vector2(0,0),40,2,R_GREEN)
         draw_text_ex(font,"Team Number:"+["idk",teamnumber][connected],Vector2(200,0),40,2,W_PURPLE2)
         draw_line(190,0,190,50,WHITE)
@@ -100,29 +100,30 @@ async def main():
         
         draw_line(50,100,921,100,WHITE)
         draw_line(487,100,487,height,WHITE)
-        
-        if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_RIGHT):
-            connected = not connected
+        try:
+            if is_mouse_button_pressed(MouseButton.MOUSE_BUTTON_RIGHT):
+                connected = not connected
 
-        if circleButton(1200,140,50,"DIVEBUTTON",W_PURPLE2,"W_PURPLE2"):
-            print("D")
-            ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))
+            if circleButton(1200,140,50,"DIVEBUTTON",W_PURPLE2,"W_PURPLE2"):
+                print("D")
+                ser.write(bytes('AT+SEND=27,1,D\r\n',"utf-8"))
 
-        if circleButton(1340,140,50,"HIBUTTON",BLUE,"BLUE"):
-            ser.write(bytes('AT+SEND=27,1,H\r\n',"utf-8"))
-            print("H")
+            if circleButton(1340,140,50,"HIBUTTON",BLUE,"BLUE"):
+                ser.write(bytes('AT+SEND=27,1,H\r\n',"utf-8"))
+                print("H")
 
-        if circleButton(1480,140,50,"DATABUTTON",YELLOW,"YELLOW"):
-            ser.write(bytes('AT+SEND=27,1,U\r\n',"utf-8"))
-            print("U")
-        
-        if circleButton(1620,140,50,"HEYBUTTON",RED,"RED"):
-            ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
-            print("n")
-        if circleButton(1480,280,50,"NONE",BLACK,"YELLOW"):
-            ser.write(bytes('AT+SEND=27,1,E\r\n',"utf-8"))
-            print("U")
-
+            if circleButton(1480,140,50,"DATABUTTON",YELLOW,"YELLOW"):
+                ser.write(bytes('AT+SEND=27,1,U\r\n',"utf-8"))
+                print("U")
+            
+            if circleButton(1620,140,50,"HEYBUTTON",RED,"RED"):
+                ser.write(bytes('AT+SEND=27,1,n\r\n',"utf-8"))
+                print("n")
+            if circleButton(1480,280,50,"NONE",BLACK,"YELLOW"):
+                ser.write(bytes('AT+SEND=27,1,E\r\n',"utf-8"))
+                print("U")
+        except:
+            pass
         # if circleButton(1200,500,50,"DIVEBUTTON",YELLOW,"YELLOW"):
         #     print("D")
         #     ser.write(bytes('AT+SEND=27,1,E\r\n',"utf-8"))

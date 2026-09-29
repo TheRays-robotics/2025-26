@@ -11,7 +11,6 @@ MS5837 sensor;
 #define RYLR Serial2
 #define lights Serial1
 
-
 int holding = 0;   // how long the float has been maintaing depth
 int dataIndex = 0; // current data point index
 float depth = 0.0f;
@@ -19,8 +18,8 @@ float output = 0.0f;
 char message;
 
 bool SIM = false; // weather or not its in simualtion mode
-float descentDepth = 1.1+1;
-float Icesheet = 0.4 + 1;
+float descentDepth = 2;
+float Icesheet = 1;
 // 0.46
 float setpoint = descentDepth;
 
@@ -185,7 +184,7 @@ void wait() {
             RYLR.print("AT+SEND=82,2,hi");
             RYLR.print("\r\n");
             updateDepth();
-        controller();
+            controller();
 
             surfaceDepth = depth;
         }
@@ -232,7 +231,6 @@ void descend() {
             Serial.print("D");
             Serial.println(output);
         } else {
-
             engine.writeMicroseconds(int(output));
         }
 
@@ -271,8 +269,6 @@ void descend() {
 void ascend() {
     setpoint = Icesheet;
 
-
-
     holding = 0;
     while (true) {
 
@@ -280,7 +276,7 @@ void ascend() {
 
         updateDepth();
 
-                controller();
+        controller();
 
         // send a debug message
         sendradiomessage(String(depth) + " : " + String(output) +
@@ -367,7 +363,6 @@ void setup() {
     }
     delay(1000);
     Serial.setTimeout(10);
-
 
     setSyncProvider(RTC.get);
     if (timeStatus() != timeSet)
